@@ -101,7 +101,13 @@ internal fun toWeatherData(
     hourly = hourly.map { it.toHourlyForecast() },
     daily = daily.map { it.toDailyForecast() },
     updatedAt = Instant.ofEpochSecond(current.updatedAtEpochSec),
+    temperatureUnit = current.temperatureUnit.toEnumOrDefault(UserSettings.Default.temperatureUnit),
+    windSpeedUnit = current.windSpeedUnit.toEnumOrDefault(UserSettings.Default.windSpeedUnit),
 )
+
+/** Битое/устаревшее значение из БД тихо падает в дефолт — не повод крэшиться. */
+private inline fun <reified T : Enum<T>> String?.toEnumOrDefault(default: T): T =
+    this?.let { value -> enumValues<T>().firstOrNull { it.name == value } } ?: default
 
 internal fun LocationEntity.toLocation(): Location = Location(
     id = id,

@@ -12,4 +12,11 @@ data class WeatherData(
     val daily: List<DailyForecast>,
     /** Момент последней успешной синхронизации — для «обновлено N мин назад» и политики устаревания. */
     val updatedAt: Instant,
+    /**
+     * Единицы, в которых сервер отдал данные при синке. Могут отставать от текущих
+     * настроек, если смена единиц случилась без сети — подписи в UI берутся отсюда,
+     * чтобы не показывать «21» с подписью «°F» (docs/PLAN.md §5.12).
+     */
+    val temperatureUnit: TemperatureUnit,
+    val windSpeedUnit: WindSpeedUnit,
 )

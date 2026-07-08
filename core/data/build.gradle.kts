@@ -39,8 +39,11 @@ dependencies {
     api(project(":core:common"))
     implementation(project(":core:network"))
     implementation(project(":core:database"))
+    implementation(project(":core:datastore"))
 
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.play.services.location)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

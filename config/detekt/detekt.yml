@@ -35,3 +35,9 @@ complexity:
   LongMethod:
     # Декларативная Compose-разметка легитимно длинная
     ignoreAnnotated: ['Composable', 'Preview']
+  LongParameterList:
+    # Stateless-экраны принимают все состояния и колбэки снаружи — это суть паттерна
+    ignoreAnnotated: ['Composable']
+  TooManyFunctions:
+    # Файл экрана = экран + приватные секции + превью; для обычного кода правило работает
+    ignoreAnnotatedFunctions: ['Composable', 'Preview']

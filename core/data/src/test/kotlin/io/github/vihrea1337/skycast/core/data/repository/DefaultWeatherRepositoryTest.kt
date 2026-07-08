@@ -6,6 +6,8 @@ import io.github.vihrea1337.skycast.core.data.testdouble.FakeLocationDao
 import io.github.vihrea1337.skycast.core.data.testdouble.FakeWeatherDao
 import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
+import io.github.vihrea1337.skycast.core.model.ThemeMode
+import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherType
 import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import io.github.vihrea1337.skycast.core.network.NetworkDataSource
@@ -14,6 +16,8 @@ import io.github.vihrea1337.skycast.core.network.dto.DailyDto
 import io.github.vihrea1337.skycast.core.network.dto.ForecastResponseDto
 import io.github.vihrea1337.skycast.core.network.dto.HourlyDto
 import io.github.vihrea1337.skycast.core.network.dto.PlaceDto
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -34,7 +38,20 @@ class DefaultWeatherRepositoryTest {
     private val locationDao = FakeLocationDao()
 
     @Test
-    fun `first refresh seeds default location and fills cache`() = runTest {
+    fun `refresh without selected location is a no-op success`() = runTest {
+        val network = FakeNetworkDataSource(AppResult.Success(sampleDto()))
+        val repository = repository(network)
+
+        val result = repository.refresh()
+
+        assertEquals(AppResult.Success(Unit), result)
+        assertEquals(0, network.forecastCallCount)
+        assertNull(repository.observeWeather().first())
+    }
+
+    @Test
+    fun `refresh fills cache and observeWeather emits mapped weather`() = runTest {
+        locationDao.saveAndSelect(petrozavodsk)
         val repository = repository(FakeNetworkDataSource(AppResult.Success(sampleDto())))
 
         val result = repository.refresh()
@@ -44,17 +61,12 @@ class DefaultWeatherRepositoryTest {
         assertEquals("Петрозаводск", weather.location.name)
         assertEquals(WeatherType.OVERCAST, weather.current.weatherType)
         assertEquals(fixedInstant, weather.updatedAt)
-    }
-
-    @Test
-    fun `observeWeather emits null before first successful refresh`() = runTest {
-        val repository = repository(FakeNetworkDataSource(AppResult.Success(sampleDto())))
-
-        assertNull(repository.observeWeather().first())
+        assertEquals(TemperatureUnit.CELSIUS, weather.temperatureUnit)
     }
 
     @Test
     fun `refresh failure keeps existing cache untouched`() = runTest {
+        locationDao.saveAndSelect(petrozavodsk)
         val network = FakeNetworkDataSource(AppResult.Success(sampleDto(temperature = 10.0)))
         val repository = repository(network)
         repository.refresh()
@@ -68,6 +80,7 @@ class DefaultWeatherRepositoryTest {
 
     @Test
     fun `broken dto maps to unknown error and keeps cache`() = runTest {
+        locationDao.saveAndSelect(petrozavodsk)
         val network = FakeNetworkDataSource(AppResult.Success(sampleDto(temperature = 10.0)))
         val repository = repository(network)
         repository.refresh()
@@ -83,8 +96,9 @@ class DefaultWeatherRepositoryTest {
 
     @Test
     fun `switching selected location switches weather stream`() = runTest {
+        locationDao.saveAndSelect(petrozavodsk)
         val repository = repository(FakeNetworkDataSource(AppResult.Success(sampleDto(temperature = 21.0))))
-        repository.refresh() // сеет и заполняет Петрозаводск
+        repository.refresh()
 
         val moscow = LocationEntity(
             id = 524901,
@@ -102,7 +116,7 @@ class DefaultWeatherRepositoryTest {
         // у Москвы кэша ещё нет — flatMapLatest должен переключиться на пустой поток
         assertNull(repository.observeWeather().first())
 
-        locationDao.select(DefaultWeatherRepository.DefaultLocation.id)
+        locationDao.select(petrozavodsk.id)
         assertEquals(21.0, repository.observeWeather().first()!!.current.temperature, 0.0)
     }
 
@@ -110,24 +124,49 @@ class DefaultWeatherRepositoryTest {
         network = network,
         weatherDao = weatherDao,
         locationDao = locationDao,
+        settingsRepository = FakeSettingsRepository(),
         clock = fixedClock,
         ioDispatcher = StandardTestDispatcher(testScheduler),
     )
 
+    private class FakeSettingsRepository : SettingsRepository {
+        override val settings: Flow<UserSettings> = MutableStateFlow(UserSettings.Default)
+        override suspend fun setTemperatureUnit(unit: TemperatureUnit) = Unit
+        override suspend fun setWindSpeedUnit(unit: WindSpeedUnit) = Unit
+        override suspend fun setTheme(mode: ThemeMode) = Unit
+    }
+
     private class FakeNetworkDataSource(
         var forecastResult: AppResult<ForecastResponseDto>,
     ) : NetworkDataSource {
+
+        var forecastCallCount = 0
+            private set
 
         override suspend fun getForecast(
             latitude: Double,
             longitude: Double,
             temperatureUnit: TemperatureUnit,
             windSpeedUnit: WindSpeedUnit,
-        ): AppResult<ForecastResponseDto> = forecastResult
+        ): AppResult<ForecastResponseDto> {
+            forecastCallCount++
+            return forecastResult
+        }
 
         override suspend fun searchPlaces(query: String, language: String): AppResult<List<PlaceDto>> =
             AppResult.Success(emptyList())
     }
+
+    private val petrozavodsk = LocationEntity(
+        id = 509820,
+        name = "Петрозаводск",
+        region = "Карелия",
+        country = "Россия",
+        latitude = 61.78491,
+        longitude = 34.34691,
+        isSelected = true,
+        sortOrder = 0,
+    )
 
     private fun sampleDto(temperature: Double = 21.4) = ForecastResponseDto(
         current = CurrentDto(

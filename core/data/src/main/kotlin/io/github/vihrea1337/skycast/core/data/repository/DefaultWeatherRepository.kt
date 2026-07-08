@@ -10,8 +10,6 @@ import io.github.vihrea1337.skycast.core.data.mapper.toHourlyForecastEntities
 import io.github.vihrea1337.skycast.core.data.mapper.toWeatherData
 import io.github.vihrea1337.skycast.core.database.dao.LocationDao
 import io.github.vihrea1337.skycast.core.database.dao.WeatherDao
-import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
-import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.network.NetworkDataSource
 import kotlinx.coroutines.CoroutineDispatcher
@@ -30,6 +28,7 @@ internal class DefaultWeatherRepository @Inject constructor(
     private val network: NetworkDataSource,
     private val weatherDao: WeatherDao,
     private val locationDao: LocationDao,
+    private val settingsRepository: SettingsRepository,
     private val clock: Clock,
     @Dispatcher(DispatcherType.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : WeatherRepository {
@@ -57,8 +56,10 @@ internal class DefaultWeatherRepository @Inject constructor(
             .flowOn(ioDispatcher)
 
     override suspend fun refresh(): AppResult<Unit> = withContext(ioDispatcher) {
-        val location = locationDao.observeSelected().first() ?: seedDefaultLocation()
-        val settings = UserSettings.Default // этап 4: единицы придут из DataStore
+        // Нет выбранного города (первый запуск) — освежать нечего; Home покажет NoCity
+        val location = locationDao.observeSelected().first()
+            ?: return@withContext AppResult.Success(Unit)
+        val settings = settingsRepository.settings.first()
 
         val response = network.getForecast(
             latitude = location.latitude,
@@ -87,24 +88,5 @@ internal class DefaultWeatherRepository @Inject constructor(
         AppResult.Success(Unit)
     } catch (e: Exception) {
         AppResult.Failure(AppError.Unknown)
-    }
-
-    /** До появления :feature:search (этап 4) первый запуск сеет дефолтный город. */
-    private suspend fun seedDefaultLocation(): LocationEntity {
-        locationDao.saveAndSelect(DefaultLocation)
-        return DefaultLocation.copy(isSelected = true)
-    }
-
-    companion object {
-        internal val DefaultLocation = LocationEntity(
-            id = 509820,
-            name = "Петрозаводск",
-            region = "Карелия",
-            country = "Россия",
-            latitude = 61.78491,
-            longitude = 34.34691,
-            isSelected = true,
-            sortOrder = 0,
-        )
     }
 }
