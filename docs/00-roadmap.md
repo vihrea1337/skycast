@@ -13,15 +13,17 @@
 
 **Готово, когда:** пустое приложение собирается локально и в CI, бейдж CI зелёный. ✅
 
-## Этап 1 — Каркас: модули, DI, навигация, тема (~3–4 вечера)
+## Этап 1 — Каркас: модули, DI, навигация, тема (~3–4 вечера) ✅ выполнен 2026-07-08, тег v0.2
 
-- [ ] Разбить на модули: `:app`, `:core:common`, `:core:model`, `:core:designsystem`, `:feature:home` (пустой экран) — остальные добавлять по мере надобности
-- [ ] Convention plugins в `build-logic/` — опционально; для старта достаточно аккуратных build.gradle.kts
-- [ ] Hilt: `@HiltAndroidApp`, `@AndroidEntryPoint`, первый `@HiltViewModel`
-- [ ] Navigation Compose с type-safe маршрутами (`@Serializable` routes), NavHost в `:app`
-- [ ] Тема Material 3: светлая/тёмная, dynamic color (Android 12+), edge-to-edge, Splash Screen API
+- [x] Разбить на модули: `:app`, `:core:common`, `:core:model`, `:core:designsystem`, `:feature:home` (пустой экран)
+- [~] Convention plugins в `build-logic/` — осознанно отложено: пока конфиги модулей маленькие, копирование дешевле инфраструктуры
+- [x] Hilt: `@HiltAndroidApp`, `@AndroidEntryPoint`, первый `@HiltViewModel` (Hilt 2.58 — с 2.59 плагин требует AGP 9)
+- [x] Navigation Compose с type-safe маршрутами (`@Serializable HomeDestination`), NavHost в `:app`
+- [x] Тема Material 3 в `:core:designsystem`: светлая/тёмная, dynamic color (Android 12+), edge-to-edge, Splash Screen API
+- [x] Бонус: доменные модели в `:core:model` + первый unit-тест (WeatherType.fromWmoCode)
 
 **Готово, когда:** приложение открывает пустой Home-экран через NavHost, тема переключается с системной.
+⚠️ Сборка и тесты зелёные локально и в CI; запуск на живом устройстве/эмуляторе ещё не делался — проверить при первом открытии проекта в Android Studio.
 
 ## Этап 2 — Сеть и первая погода (~4–5 вечеров)
 
