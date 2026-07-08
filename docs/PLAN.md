@@ -179,10 +179,10 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 
 ### Прогноз — `GET https://api.open-meteo.com/v1/forecast`
 
-Пример (Сургут):
+Пример (Петрозаводск):
 
 ```
-/v1/forecast?latitude=61.25&longitude=73.39
+/v1/forecast?latitude=61.785&longitude=34.347
   &current=temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,is_day
   &hourly=temperature_2m,weather_code,precipitation_probability
   &daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset
@@ -205,9 +205,9 @@ hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ### Геокодинг — `GET https://geocoding-api.open-meteo.com/v1/search`
 
 ```
-/v1/search?name=Сургут&count=5&language=ru
-→ { "results": [ { "id": 1490624, "name": "Сургут", "latitude": 61.25, "longitude": 73.39,
-                   "country": "Россия", "admin1": "ХМАО" } ] }
+/v1/search?name=Петрозаводск&count=5&language=ru
+→ { "results": [ { "id": 509820, "name": "Петрозаводск", "latitude": 61.78491, "longitude": 34.34691,
+                   "country": "Россия", "admin1": "Карелия" } ] }
 ```
 
 ⚠️ При пустом результате поле `results` **отсутствует** в JSON — DTO должно иметь `val results: List<...> = emptyList()`.
@@ -322,7 +322,7 @@ sealed interface AppError {
 Это **не** DTO и **не** Room-entities: у сети и БД свои классы, сюда они **маппятся**. Тройное дублирование — осознанное: контракт API, схема БД и доменная модель меняются по разным причинам (Single Responsibility).
 
 ```kotlin
-data class Location(val id: Long, val name: String, val region: String?,   // admin1: «ХМАО»
+data class Location(val id: Long, val name: String, val region: String?,   // admin1: «Карелия»
                     val country: String, val latitude: Double, val longitude: Double)
 
 data class WeatherData(              // агрегат: всё для Home-экрана и виджета
@@ -575,7 +575,7 @@ ViewModel: база — `ObserveWeatherUseCase()` + флаги → `stateIn(Whil
 
 **Роль:** поиск города + сохранённые города + «моё местоположение».
 
-Экран: поле поиска (автофокус) → пока пустое: список сохранённых (текущий отмечен, клик = выбрать и назад, свайп = удалить) + кнопка «Использовать моё местоположение» → при вводе: результаты геокодинга «Сургут, ХМАО, Россия», клик = сохранить + выбрать + назад.
+Экран: поле поиска (автофокус) → пока пустое: список сохранённых (текущий отмечен, клик = выбрать и назад, свайп = удалить) + кнопка «Использовать моё местоположение» → при вводе: результаты геокодинга «Петрозаводск, Карелия, Россия», клик = сохранить + выбрать + назад.
 
 Поиск с debounce — эталонная реализация (знать наизусть, почему `debounce` + `distinctUntilChanged` + `mapLatest` — топовый вопрос на собеседованиях):
 
