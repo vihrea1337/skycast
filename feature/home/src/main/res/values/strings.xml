@@ -1,0 +1,4 @@
+<resources>
+    <string name="feature_home_placeholder_title" translatable="false">SkyCast</string>
+    <string name="feature_home_placeholder_subtitle">Weather app — under construction</string>
+</resources>

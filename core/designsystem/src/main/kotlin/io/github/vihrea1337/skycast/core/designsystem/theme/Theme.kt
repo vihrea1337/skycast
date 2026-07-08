@@ -1,4 +1,4 @@
-package io.github.vihrea1337.skycast.ui.theme
+package io.github.vihrea1337.skycast.core.designsystem.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -20,6 +20,10 @@ private val DarkColors = darkColorScheme(
     secondary = SunAmber,
 )
 
+/**
+ * Тема приложения. Пока следует системной теме; параметр под ThemeMode
+ * из настроек появится на этапе 4 (docs/PLAN.md §5.12).
+ */
 @Composable
 fun SkyCastTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -37,7 +41,7 @@ fun SkyCastTheme(
 
     MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = SkyCastTypography,
         content = content,
     )
 }
