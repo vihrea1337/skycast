@@ -4,7 +4,16 @@ data class UserSettings(
     val temperatureUnit: TemperatureUnit,
     val windSpeedUnit: WindSpeedUnit,
     val theme: ThemeMode,
-)
+) {
+    companion object {
+        /** Дефолты до появления экрана настроек (этап 4); останутся дефолтами DataStore. */
+        val Default = UserSettings(
+            temperatureUnit = TemperatureUnit.CELSIUS,
+            windSpeedUnit = WindSpeedUnit.METERS_PER_SECOND,
+            theme = ThemeMode.SYSTEM,
+        )
+    }
+}
 
 enum class TemperatureUnit { CELSIUS, FAHRENHEIT }
 

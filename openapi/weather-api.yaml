@@ -1,0 +1,153 @@
+# Учебный урезанный контракт Open-Meteo — ровно те поля, которые использует SkyCast.
+# Полная спецификация: https://github.com/open-meteo/open-meteo/blob/main/openapi.yml
+# Открывается в Swagger Editor (editor.swagger.io) — кнопка "Try it out" работает,
+# API без авторизации.
+openapi: 3.0.3
+info:
+  title: SkyCast Weather API (Open-Meteo subset)
+  description: |
+    Подмножество Open-Meteo API, используемое приложением SkyCast.
+    Данные о погоде: [Open-Meteo.com](https://open-meteo.com/) (CC-BY 4.0).
+  version: 1.0.0
+  license:
+    name: CC-BY 4.0 (данные Open-Meteo)
+    url: https://creativecommons.org/licenses/by/4.0/
+
+servers:
+  - url: https://api.open-meteo.com
+
+paths:
+  /v1/forecast:
+    get:
+      operationId: getForecast
+      summary: Текущая погода + почасовой и дневной прогноз
+      parameters:
+        - { name: latitude, in: query, required: true, schema: { type: number, format: double }, example: 61.785 }
+        - { name: longitude, in: query, required: true, schema: { type: number, format: double }, example: 34.347 }
+        - name: current
+          in: query
+          description: Список полей текущей погоды через запятую
+          schema: { type: string }
+          example: temperature_2m,apparent_temperature,relative_humidity_2m,weather_code,wind_speed_10m,surface_pressure,is_day
+        - name: hourly
+          in: query
+          schema: { type: string }
+          example: temperature_2m,weather_code,precipitation_probability
+        - name: daily
+          in: query
+          schema: { type: string }
+          example: weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset
+        - { name: timezone, in: query, schema: { type: string, default: auto } }
+        - { name: forecast_days, in: query, schema: { type: integer, default: 7, minimum: 1, maximum: 16 } }
+        - { name: temperature_unit, in: query, schema: { type: string, enum: [celsius, fahrenheit], default: celsius } }
+        - { name: wind_speed_unit, in: query, schema: { type: string, enum: [ms, kmh], default: kmh } }
+      responses:
+        "200":
+          description: Прогноз. hourly/daily — параллельные массивы одинаковой длины.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForecastResponse" }
+        "400":
+          description: Неверные параметры (например, координаты вне диапазона)
+
+  /v1/search:
+    servers:
+      - url: https://geocoding-api.open-meteo.com
+    get:
+      operationId: searchPlaces
+      summary: Геокодинг — поиск населённого пункта по названию
+      parameters:
+        - { name: name, in: query, required: true, schema: { type: string, minLength: 2 }, example: Петрозаводск }
+        - { name: count, in: query, schema: { type: integer, default: 5, maximum: 100 } }
+        - { name: language, in: query, schema: { type: string, default: en }, example: ru }
+      responses:
+        "200":
+          description: |
+            Результаты поиска. ВАЖНО: при пустом результате поле `results`
+            отсутствует в JSON целиком — клиент обязан иметь дефолт.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/GeocodingResponse" }
+
+components:
+  schemas:
+    ForecastResponse:
+      type: object
+      required: [current, hourly, daily]
+      properties:
+        current: { $ref: "#/components/schemas/CurrentWeather" }
+        hourly: { $ref: "#/components/schemas/HourlyBlock" }
+        daily: { $ref: "#/components/schemas/DailyBlock" }
+
+    CurrentWeather:
+      type: object
+      required: [time, temperature_2m, weather_code]
+      properties:
+        time: { type: string, example: "2026-07-08T14:00" }
+        temperature_2m: { type: number, example: 21.4 }
+        apparent_temperature: { type: number, example: 19.8 }
+        relative_humidity_2m: { type: integer, example: 62 }
+        weather_code:
+          type: integer
+          description: WMO weather interpretation code (0 ясно ... 95-99 гроза)
+          example: 3
+        wind_speed_10m: { type: number, example: 4.2 }
+        surface_pressure: { type: number, description: гПа, example: 1006.9 }
+        is_day: { type: integer, enum: [0, 1] }
+
+    HourlyBlock:
+      type: object
+      description: Параллельные массивы — элемент i всех массивов относится к моменту time[i]
+      properties:
+        time:
+          type: array
+          items: { type: string, example: "2026-07-08T15:00" }
+        temperature_2m:
+          type: array
+          items: { type: number }
+        weather_code:
+          type: array
+          items: { type: integer }
+        precipitation_probability:
+          type: array
+          items: { type: integer, nullable: true }
+
+    DailyBlock:
+      type: object
+      properties:
+        time:
+          type: array
+          items: { type: string, format: date }
+        weather_code:
+          type: array
+          items: { type: integer }
+        temperature_2m_max:
+          type: array
+          items: { type: number }
+        temperature_2m_min:
+          type: array
+          items: { type: number }
+        sunrise:
+          type: array
+          items: { type: string, example: "2026-07-08T02:57" }
+        sunset:
+          type: array
+          items: { type: string, example: "2026-07-08T22:12" }
+
+    GeocodingResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items: { $ref: "#/components/schemas/Place" }
+
+    Place:
+      type: object
+      required: [id, name, latitude, longitude]
+      properties:
+        id: { type: integer, format: int64, example: 509820 }
+        name: { type: string, example: Петрозаводск }
+        latitude: { type: number, example: 61.78491 }
+        longitude: { type: number, example: 34.34691 }
+        country: { type: string, example: Россия }
+        admin1: { type: string, example: Карелия, nullable: true }

@@ -24,5 +24,7 @@ rootProject.name = "SkyCast"
 include(":app")
 include(":core:common")
 include(":core:model")
+include(":core:network")
+include(":core:data")
 include(":core:designsystem")
 include(":feature:home")
