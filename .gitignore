@@ -1,0 +1,21 @@
+# Gradle
+.gradle/
+build/
+
+# Machine-specific
+local.properties
+
+# IDE
+.idea/
+*.iml
+captures/
+.kotlin/
+
+# Native
+.externalNativeBuild/
+.cxx/
+
+# Signing — never commit keys
+*.jks
+*.keystore
+keystore.properties

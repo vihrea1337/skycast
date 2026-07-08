@@ -1,0 +1,11 @@
+* text=auto
+
+# Gradle wrapper scripts must keep their native line endings
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+
+*.jar binary
+*.zip binary
+*.png binary
+*.webp binary
