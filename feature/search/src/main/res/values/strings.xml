@@ -1,0 +1,13 @@
+<resources>
+    <string name="feature_search_title">City search</string>
+    <string name="feature_search_back">Back</string>
+    <string name="feature_search_hint">City name…</string>
+    <string name="feature_search_my_location">Use my location</string>
+    <string name="feature_search_selected">Selected</string>
+    <string name="feature_search_delete">Remove from saved</string>
+    <string name="feature_search_empty">Nothing found. Try a different spelling.</string>
+    <string name="feature_search_error_network">No internet connection</string>
+    <string name="feature_search_error_generic">Search failed, try again</string>
+    <string name="feature_search_permission_denied">No location permission — pick a city manually</string>
+    <string name="feature_search_detect_failed">Couldn\'t detect your city — pick it manually</string>
+</resources>

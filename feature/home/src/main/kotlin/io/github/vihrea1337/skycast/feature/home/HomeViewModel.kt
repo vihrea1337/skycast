@@ -5,12 +5,15 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.vihrea1337.skycast.core.common.result.AppError
 import io.github.vihrea1337.skycast.core.common.result.AppResult
+import io.github.vihrea1337.skycast.core.data.repository.LocationRepository
 import io.github.vihrea1337.skycast.core.data.repository.WeatherRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.time.Clock
@@ -20,6 +23,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val weatherRepository: WeatherRepository,
+    private val locationRepository: LocationRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -28,16 +32,18 @@ class HomeViewModel @Inject constructor(
     private val fatalError = MutableStateFlow<AppError?>(null)
 
     /**
-     * База состояния — реактивный поток из Room (SSOT): данные не хранятся
+     * База состояния — реактивные потоки из Room (SSOT): данные не хранятся
      * в ViewModel второй раз, флаги подмешиваются через combine (docs/PLAN.md §5.10).
      */
     val uiState: StateFlow<HomeUiState> = combine(
+        locationRepository.observeSelected(),
         weatherRepository.observeWeather(),
         isRefreshing,
         transientError,
         fatalError,
-    ) { weather, refreshing, transient, fatal ->
+    ) { selected, weather, refreshing, transient, fatal ->
         when {
+            selected == null -> HomeUiState.NoCity
             weather != null -> HomeUiState.Content(weather, refreshing, transient)
             refreshing -> HomeUiState.Loading
             fatal != null -> HomeUiState.Error(fatal)
@@ -51,7 +57,13 @@ class HomeViewModel @Inject constructor(
     )
 
     init {
-        viewModelScope.launch { refreshIfStale() }
+        // Смена выбранного города (и первый запуск с городом) — повод обновиться
+        viewModelScope.launch {
+            locationRepository.observeSelected()
+                .map { it?.id }
+                .distinctUntilChanged()
+                .collect { id -> if (id != null) refreshIfStale() }
+        }
     }
 
     fun onRefresh() {
@@ -62,7 +74,7 @@ class HomeViewModel @Inject constructor(
         transientError.value = null
     }
 
-    /** Политика устаревания: авто-refresh при открытии, если данным ≥ 30 минут. */
+    /** Политика устаревания: авто-refresh, если данным ≥ 30 минут или кэша нет. */
     private suspend fun refreshIfStale() {
         val cached = weatherRepository.observeWeather().first()
         val isStale = cached == null ||

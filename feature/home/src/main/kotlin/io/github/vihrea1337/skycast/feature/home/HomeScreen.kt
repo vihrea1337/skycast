@@ -11,12 +11,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -37,8 +45,10 @@ import io.github.vihrea1337.skycast.core.designsystem.component.labelRes
 import io.github.vihrea1337.skycast.core.designsystem.theme.SkyCastTheme
 import io.github.vihrea1337.skycast.core.model.CurrentWeather
 import io.github.vihrea1337.skycast.core.model.Location
+import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.model.WeatherType
+import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -46,6 +56,8 @@ import kotlin.math.roundToInt
 /** Stateful-обвязка: связывает ViewModel и stateless-экран (конвенция из docs/PLAN.md §2.7). */
 @Composable
 fun HomeRoute(
+    onSearchClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
@@ -54,6 +66,8 @@ fun HomeRoute(
         state = uiState,
         onRefresh = viewModel::onRefresh,
         onTransientErrorShown = viewModel::onTransientErrorShown,
+        onSearchClick = onSearchClick,
+        onSettingsClick = onSettingsClick,
         modifier = modifier,
     )
 }
@@ -64,6 +78,8 @@ internal fun HomeScreen(
     state: HomeUiState,
     onRefresh: () -> Unit,
     onTransientErrorShown: () -> Unit,
+    onSearchClick: () -> Unit,
+    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -76,19 +92,42 @@ internal fun HomeScreen(
     }
 
     Box(modifier = modifier.fillMaxSize()) {
-        when (state) {
-            HomeUiState.Loading -> LoadingContent()
-
-            is HomeUiState.Error -> ErrorContent(
-                message = state.error.toMessage(),
-                onRetry = onRefresh,
+        Column(modifier = Modifier.fillMaxSize()) {
+            TopAppBar(
+                title = {
+                    Text((state as? HomeUiState.Content)?.weather?.location?.name ?: "SkyCast")
+                },
+                actions = {
+                    IconButton(onClick = onSearchClick) {
+                        Icon(
+                            imageVector = Icons.Default.Search,
+                            contentDescription = stringResource(R.string.feature_home_action_search),
+                        )
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.feature_home_action_settings),
+                        )
+                    }
+                },
             )
+            when (state) {
+                HomeUiState.Loading -> LoadingContent()
 
-            is HomeUiState.Content -> PullToRefreshBox(
-                isRefreshing = state.isRefreshing,
-                onRefresh = onRefresh,
-            ) {
-                WeatherContent(weather = state.weather)
+                HomeUiState.NoCity -> NoCityContent(onSearchClick = onSearchClick)
+
+                is HomeUiState.Error -> ErrorContent(
+                    message = state.error.toMessage(),
+                    onRetry = onRefresh,
+                )
+
+                is HomeUiState.Content -> PullToRefreshBox(
+                    isRefreshing = state.isRefreshing,
+                    onRefresh = onRefresh,
+                ) {
+                    WeatherContent(weather = state.weather)
+                }
             }
         }
         SnackbarHost(
@@ -106,6 +145,26 @@ private fun LoadingContent(modifier: Modifier = Modifier) {
 }
 
 @Composable
+private fun NoCityContent(onSearchClick: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(32.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.feature_home_no_city_message),
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center,
+        )
+        Button(onClick = onSearchClick) {
+            Text(stringResource(R.string.feature_home_no_city_action))
+        }
+    }
+}
+
+@Composable
 private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) {
     val current = weather.current
     Column(
@@ -115,10 +174,6 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
             .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(
-            text = weather.location.name,
-            style = MaterialTheme.typography.headlineMedium,
-        )
         Text(
             text = updatedAgoText(weather.updatedAt),
             style = MaterialTheme.typography.labelMedium,
@@ -150,7 +205,11 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             MetricChip(
                 label = stringResource(R.string.feature_home_wind),
-                value = stringResource(R.string.feature_home_wind_value, "%.1f".format(current.windSpeed)),
+                // Подпись единиц — из units-at-sync, а не из настроек (docs/PLAN.md §5.12)
+                value = stringResource(
+                    weather.windSpeedUnit.valueRes(),
+                    "%.1f".format(current.windSpeed),
+                ),
             )
             MetricChip(
                 label = stringResource(R.string.feature_home_humidity),
@@ -166,6 +225,11 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
 
 /** «21°», «-7°»: округление до целого — точнее для погоды не нужно. */
 private fun formatTemperature(value: Double): String = "${value.roundToInt()}°"
+
+private fun WindSpeedUnit.valueRes(): Int = when (this) {
+    WindSpeedUnit.METERS_PER_SECOND -> R.string.feature_home_wind_value_ms
+    WindSpeedUnit.KILOMETERS_PER_HOUR -> R.string.feature_home_wind_value_kmh
+}
 
 @Composable
 private fun updatedAgoText(updatedAt: Instant): String {
@@ -194,18 +258,22 @@ private fun HomeScreenContentPreview() {
             state = HomeUiState.Content(previewWeather, isRefreshing = false, transientError = null),
             onRefresh = {},
             onTransientErrorShown = {},
+            onSearchClick = {},
+            onSettingsClick = {},
         )
     }
 }
 
 @Preview(showBackground = true)
 @Composable
-private fun HomeScreenErrorPreview() {
+private fun HomeScreenNoCityPreview() {
     SkyCastTheme {
         HomeScreen(
-            state = HomeUiState.Error(AppError.Network),
+            state = HomeUiState.NoCity,
             onRefresh = {},
             onTransientErrorShown = {},
+            onSearchClick = {},
+            onSettingsClick = {},
         )
     }
 }
@@ -231,4 +299,6 @@ private val previewWeather = WeatherData(
     hourly = emptyList(),
     daily = emptyList(),
     updatedAt = Instant.now(),
+    temperatureUnit = TemperatureUnit.CELSIUS,
+    windSpeedUnit = WindSpeedUnit.METERS_PER_SECOND,
 )

@@ -7,6 +7,9 @@ sealed interface HomeUiState {
 
     data object Loading : HomeUiState
 
+    /** Первый запуск: город ещё не выбран — ведём в поиск. */
+    data object NoCity : HomeUiState
+
     data class Content(
         val weather: WeatherData,
         val isRefreshing: Boolean,

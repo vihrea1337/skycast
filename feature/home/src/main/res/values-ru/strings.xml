@@ -5,8 +5,14 @@
     <string name="feature_home_updated_minutes_ago">Обновлено %1$d мин назад</string>
     <string name="feature_home_updated_hours_ago">Обновлено %1$d ч назад</string>
 
+    <string name="feature_home_action_search">Поиск города</string>
+    <string name="feature_home_action_settings">Настройки</string>
+    <string name="feature_home_no_city_message">Выбери город, чтобы увидеть погоду</string>
+    <string name="feature_home_no_city_action">Выбрать город</string>
+
     <string name="feature_home_wind">Ветер</string>
-    <string name="feature_home_wind_value">%1$s м/с</string>
+    <string name="feature_home_wind_value_ms">%1$s м/с</string>
+    <string name="feature_home_wind_value_kmh">%1$s км/ч</string>
     <string name="feature_home_humidity">Влажность</string>
     <string name="feature_home_humidity_value">%1$d%%</string>
     <string name="feature_home_pressure">Давление</string>

@@ -5,8 +5,14 @@
     <string name="feature_home_updated_minutes_ago">Updated %1$d min ago</string>
     <string name="feature_home_updated_hours_ago">Updated %1$d h ago</string>
 
+    <string name="feature_home_action_search">Search city</string>
+    <string name="feature_home_action_settings">Settings</string>
+    <string name="feature_home_no_city_message">Pick a city to see the weather</string>
+    <string name="feature_home_no_city_action">Choose a city</string>
+
     <string name="feature_home_wind">Wind</string>
-    <string name="feature_home_wind_value">%1$s m/s</string>
+    <string name="feature_home_wind_value_ms">%1$s m/s</string>
+    <string name="feature_home_wind_value_kmh">%1$s km/h</string>
     <string name="feature_home_humidity">Humidity</string>
     <string name="feature_home_humidity_value">%1$d%%</string>
     <string name="feature_home_pressure">Pressure</string>

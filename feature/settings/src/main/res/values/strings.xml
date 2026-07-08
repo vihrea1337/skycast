@@ -1,0 +1,21 @@
+<resources>
+    <string name="feature_settings_title">Settings</string>
+    <string name="feature_settings_back">Back</string>
+
+    <string name="feature_settings_units">Units</string>
+    <string name="feature_settings_temperature">Temperature</string>
+    <string name="feature_settings_celsius" translatable="false">°C</string>
+    <string name="feature_settings_fahrenheit" translatable="false">°F</string>
+    <string name="feature_settings_wind_speed">Wind speed</string>
+    <string name="feature_settings_ms">m/s</string>
+    <string name="feature_settings_kmh">km/h</string>
+
+    <string name="feature_settings_appearance">Appearance</string>
+    <string name="feature_settings_theme_system">System</string>
+    <string name="feature_settings_theme_light">Light</string>
+    <string name="feature_settings_theme_dark">Dark</string>
+
+    <string name="feature_settings_about">About</string>
+    <string name="feature_settings_attribution">Weather data by Open-Meteo.com (CC-BY 4.0)</string>
+    <string name="feature_settings_source_code">Source code on GitHub</string>
+</resources>

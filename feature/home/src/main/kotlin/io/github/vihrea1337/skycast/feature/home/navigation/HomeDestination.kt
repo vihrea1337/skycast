@@ -9,12 +9,12 @@ import kotlinx.serialization.Serializable
 @Serializable
 data object HomeDestination
 
-/**
- * Точка подключения фичи к NavHost.
- * Колбэки навигации (поиск, настройки) добавятся вместе с соответствующими фичами.
- */
-fun NavGraphBuilder.homeScreen() {
+/** Точка подключения фичи к NavHost. Куда ведут колбэки — решает :app (docs/PLAN.md §5.1). */
+fun NavGraphBuilder.homeScreen(
+    onSearchClick: () -> Unit,
+    onSettingsClick: () -> Unit,
+) {
     composable<HomeDestination> {
-        HomeRoute()
+        HomeRoute(onSearchClick = onSearchClick, onSettingsClick = onSettingsClick)
     }
 }

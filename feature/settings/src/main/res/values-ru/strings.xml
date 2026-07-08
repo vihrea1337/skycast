@@ -1,0 +1,19 @@
+<resources>
+    <string name="feature_settings_title">Настройки</string>
+    <string name="feature_settings_back">Назад</string>
+
+    <string name="feature_settings_units">Единицы измерения</string>
+    <string name="feature_settings_temperature">Температура</string>
+    <string name="feature_settings_wind_speed">Скорость ветра</string>
+    <string name="feature_settings_ms">м/с</string>
+    <string name="feature_settings_kmh">км/ч</string>
+
+    <string name="feature_settings_appearance">Внешний вид</string>
+    <string name="feature_settings_theme_system">Системная</string>
+    <string name="feature_settings_theme_light">Светлая</string>
+    <string name="feature_settings_theme_dark">Тёмная</string>
+
+    <string name="feature_settings_about">О приложении</string>
+    <string name="feature_settings_attribution">Данные о погоде: Open-Meteo.com (CC-BY 4.0)</string>
+    <string name="feature_settings_source_code">Исходный код на GitHub</string>
+</resources>

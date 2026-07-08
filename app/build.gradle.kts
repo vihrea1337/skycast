@@ -57,12 +57,15 @@ detekt {
 
 dependencies {
     implementation(project(":feature:home"))
+    implementation(project(":feature:search"))
+    implementation(project(":feature:settings"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:data"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.navigation.compose)
 

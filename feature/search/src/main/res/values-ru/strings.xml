@@ -1,0 +1,13 @@
+<resources>
+    <string name="feature_search_title">Поиск города</string>
+    <string name="feature_search_back">Назад</string>
+    <string name="feature_search_hint">Название города…</string>
+    <string name="feature_search_my_location">Моё местоположение</string>
+    <string name="feature_search_selected">Выбран</string>
+    <string name="feature_search_delete">Удалить из сохранённых</string>
+    <string name="feature_search_empty">Ничего не нашли. Попробуй другое написание.</string>
+    <string name="feature_search_error_network">Нет соединения с интернетом</string>
+    <string name="feature_search_error_generic">Поиск не удался, попробуй ещё раз</string>
+    <string name="feature_search_permission_denied">Нет доступа к геолокации — выбери город вручную</string>
+    <string name="feature_search_detect_failed">Не удалось определить город — выбери вручную</string>
+</resources>

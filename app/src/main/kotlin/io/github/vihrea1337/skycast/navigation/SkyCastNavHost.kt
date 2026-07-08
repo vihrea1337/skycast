@@ -7,6 +7,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 import io.github.vihrea1337.skycast.feature.home.navigation.HomeDestination
 import io.github.vihrea1337.skycast.feature.home.navigation.homeScreen
+import io.github.vihrea1337.skycast.feature.search.navigation.SearchDestination
+import io.github.vihrea1337.skycast.feature.search.navigation.searchScreen
+import io.github.vihrea1337.skycast.feature.settings.navigation.SettingsDestination
+import io.github.vihrea1337.skycast.feature.settings.navigation.settingsScreen
 
 /**
  * Единственное место, где фичи знают друг о друге: навигация между ними
@@ -22,6 +26,11 @@ fun SkyCastNavHost(
         startDestination = HomeDestination,
         modifier = modifier,
     ) {
-        homeScreen()
+        homeScreen(
+            onSearchClick = { navController.navigate(SearchDestination) },
+            onSettingsClick = { navController.navigate(SettingsDestination) },
+        )
+        searchScreen(onBack = navController::popBackStack)
+        settingsScreen(onBack = navController::popBackStack)
     }
 }
