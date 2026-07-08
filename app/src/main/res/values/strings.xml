@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name" translatable="false">SkyCast</string>
+    <string name="placeholder_subtitle">Weather app — under construction</string>
+</resources>

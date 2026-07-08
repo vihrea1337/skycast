@@ -1,0 +1,37 @@
+# Конфиг detekt поверх дефолтных правил (buildUponDefaultConfig = true в build.gradle.kts).
+# Здесь только отклонения от дефолта; форматирование — правила ktlint через detekt-formatting.
+
+build:
+  maxIssues: 0
+
+formatting:
+  active: true
+  android: true
+  MaximumLineLength:
+    # дублирует style > MaxLineLength — оставляем одну проверку
+    active: false
+
+naming:
+  FunctionNaming:
+    # Composable-функции именуются с большой буквы — это конвенция Compose
+    ignoreAnnotated: ['Composable']
+
+style:
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreCompanionObjectPropertyDeclaration: true
+    # dp/sp-литералы в разметке — не магические числа
+    ignoreAnnotated: ['Composable', 'Preview']
+  UnusedPrivateMember:
+    # @Preview-функции приватны и «не используются» — это нормально
+    ignoreAnnotated: ['Preview']
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'kotlinx.coroutines.Dispatchers'
+        reason: 'Внедряй диспетчеры через DI-квалификаторы из :core:common — прямое использование делает код нетестируемым (docs/PLAN.md, раздел 5.2).'
+
+complexity:
+  LongMethod:
+    # Декларативная Compose-разметка легитимно длинная
+    ignoreAnnotated: ['Composable', 'Preview']
