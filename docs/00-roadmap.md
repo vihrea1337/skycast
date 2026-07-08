@@ -2,16 +2,16 @@
 
 Каждый этап заканчивается **работающим приложением** (пусть и урезанным) и отдельным git-тегом (`v0.1`, `v0.2`, ...). Оценки времени — из расчёта «вечерами», по 1.5–2 часа.
 
-## Этап 0 — Фундамент (~2–3 вечера)
+## Этап 0 — Фундамент (~2–3 вечера) ✅ выполнен 2026-07-08, тег v0.1
 
-- [ ] `git init` в корне папки, первый коммит с `docs/`, репозиторий на GitHub (public)
-- [ ] Создать проект в Android Studio: шаблон **Empty Activity (Compose)**, package `com.<ник>.skycast`, minSdk 26, Kotlin DSL
-- [ ] Перевести зависимости на version catalog `gradle/libs.versions.toml` (обычно уже так)
-- [ ] Подключить detekt + ktlint (см. `31-ci-cd.md`), исправить замечания
-- [ ] Базовый CI на GitHub Actions: build + detekt + unit tests на каждый push/PR
-- [ ] `.gitignore`, `LICENSE` (MIT)
+- [x] `git init` в корне папки, первый коммит с `docs/`, репозиторий на GitHub (public): [vihrea1337/skycast](https://github.com/vihrea1337/skycast)
+- [x] Создать проект: Empty Activity (Compose), package `io.github.vihrea1337.skycast`, minSdk 26, Kotlin DSL (создан вручную, без мастера Android Studio; SDK установлен через cmdline-tools)
+- [x] Version catalog `gradle/libs.versions.toml` (AGP 8.13.2, Gradle 8.14.3, Kotlin 2.2.21)
+- [x] Подключить detekt + ktlint (detekt-formatting), maxIssues 0
+- [x] Базовый CI на GitHub Actions (после фикса execute-бита gradlew — зелёный)
+- [x] `.gitignore`, `LICENSE` (MIT)
 
-**Готово, когда:** пустое приложение собирается локально и в CI, бейдж CI зелёный.
+**Готово, когда:** пустое приложение собирается локально и в CI, бейдж CI зелёный. ✅
 
 ## Этап 1 — Каркас: модули, DI, навигация, тема (~3–4 вечера)
 
