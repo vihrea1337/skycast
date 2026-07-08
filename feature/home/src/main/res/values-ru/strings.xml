@@ -1,3 +1,14 @@
 <resources>
-    <string name="feature_home_placeholder_subtitle">Приложение погоды — скоро здесь будет прогноз</string>
+    <string name="feature_home_feels_like">Ощущается как %1$s</string>
+
+    <string name="feature_home_wind">Ветер</string>
+    <string name="feature_home_wind_value">%1$s м/с</string>
+    <string name="feature_home_humidity">Влажность</string>
+    <string name="feature_home_humidity_value">%1$d%%</string>
+    <string name="feature_home_pressure">Давление</string>
+    <string name="feature_home_pressure_value">%1$d гПа</string>
+
+    <string name="feature_home_error_network">Нет соединения с интернетом</string>
+    <string name="feature_home_error_server">Сервис погоды недоступен (ошибка %1$d)</string>
+    <string name="feature_home_error_unknown">Что-то пошло не так</string>
 </resources>

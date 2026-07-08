@@ -42,6 +42,8 @@ detekt {
 
 dependencies {
     implementation(project(":core:designsystem"))
+    // Напрямую в data: тонкий :core:domain появится на этапе 5 и встанет между ними
+    implementation(project(":core:data"))
 
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.navigation.compose)

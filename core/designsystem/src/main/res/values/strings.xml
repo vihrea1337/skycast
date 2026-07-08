@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_designsystem_retry">Retry</string>
+
+    <string name="core_designsystem_weather_clear">Clear</string>
+    <string name="core_designsystem_weather_partly_cloudy">Partly cloudy</string>
+    <string name="core_designsystem_weather_overcast">Overcast</string>
+    <string name="core_designsystem_weather_fog">Fog</string>
+    <string name="core_designsystem_weather_drizzle">Drizzle</string>
+    <string name="core_designsystem_weather_rain">Rain</string>
+    <string name="core_designsystem_weather_rain_showers">Rain showers</string>
+    <string name="core_designsystem_weather_snow">Snow</string>
+    <string name="core_designsystem_weather_snow_showers">Snow showers</string>
+    <string name="core_designsystem_weather_thunderstorm">Thunderstorm</string>
+</resources>

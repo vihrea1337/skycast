@@ -58,6 +58,7 @@ detekt {
 dependencies {
     implementation(project(":feature:home"))
     implementation(project(":core:designsystem"))
+    implementation(project(":core:data"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)

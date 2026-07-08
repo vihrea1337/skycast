@@ -1,0 +1,14 @@
+<resources>
+    <string name="core_designsystem_retry">Повторить</string>
+
+    <string name="core_designsystem_weather_clear">Ясно</string>
+    <string name="core_designsystem_weather_partly_cloudy">Переменная облачность</string>
+    <string name="core_designsystem_weather_overcast">Пасмурно</string>
+    <string name="core_designsystem_weather_fog">Туман</string>
+    <string name="core_designsystem_weather_drizzle">Морось</string>
+    <string name="core_designsystem_weather_rain">Дождь</string>
+    <string name="core_designsystem_weather_rain_showers">Ливень</string>
+    <string name="core_designsystem_weather_snow">Снег</string>
+    <string name="core_designsystem_weather_snow_showers">Снегопад</string>
+    <string name="core_designsystem_weather_thunderstorm">Гроза</string>
+</resources>
