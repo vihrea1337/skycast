@@ -1,12 +1,16 @@
 package io.github.vihrea1337.skycast.core.data.mapper
 
+import io.github.vihrea1337.skycast.core.database.entity.CurrentWeatherEntity
+import io.github.vihrea1337.skycast.core.database.entity.DailyForecastEntity
+import io.github.vihrea1337.skycast.core.database.entity.HourlyForecastEntity
+import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
 import io.github.vihrea1337.skycast.core.model.CurrentWeather
 import io.github.vihrea1337.skycast.core.model.DailyForecast
 import io.github.vihrea1337.skycast.core.model.HourlyForecast
 import io.github.vihrea1337.skycast.core.model.Location
+import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.model.WeatherType
-import io.github.vihrea1337.skycast.core.network.dto.CurrentDto
 import io.github.vihrea1337.skycast.core.network.dto.DailyDto
 import io.github.vihrea1337.skycast.core.network.dto.ForecastResponseDto
 import io.github.vihrea1337.skycast.core.network.dto.HourlyDto
@@ -17,55 +21,109 @@ import java.time.temporal.ChronoUnit
 
 internal const val HOURS_IN_FORECAST = 24
 
-/**
- * «Сшивает» параллельные массивы Open-Meteo в доменные модели.
- * Бросает исключение при рассинхроне массивов — репозиторий превращает его в AppError.Unknown.
- */
-internal fun ForecastResponseDto.toWeatherData(location: Location, updatedAt: Instant): WeatherData {
-    val currentTime = LocalDateTime.parse(current.time)
-    return WeatherData(
-        location = location,
-        current = current.toCurrentWeather(),
-        hourly = hourly.toHourlyForecasts(from = currentTime.truncatedTo(ChronoUnit.HOURS)),
-        daily = daily.toDailyForecasts(),
-        updatedAt = updatedAt,
-    )
-}
+// ---------- DTO → Entity (запись при refresh) ----------
 
-internal fun CurrentDto.toCurrentWeather(): CurrentWeather = CurrentWeather(
-    temperature = temperature,
-    feelsLike = feelsLike,
-    humidityPercent = humidityPercent,
-    pressureHpa = pressureHpa,
-    windSpeed = windSpeed,
-    weatherType = WeatherType.fromWmoCode(weatherCode),
-    isDay = isDay == 1,
+internal fun ForecastResponseDto.toCurrentWeatherEntity(
+    locationId: Long,
+    settings: UserSettings,
+    updatedAt: Instant,
+): CurrentWeatherEntity = CurrentWeatherEntity(
+    locationId = locationId,
+    temperature = current.temperature,
+    feelsLike = current.feelsLike,
+    humidityPercent = current.humidityPercent,
+    pressureHpa = current.pressureHpa,
+    windSpeed = current.windSpeed,
+    wmoCode = current.weatherCode,
+    isDay = current.isDay == 1,
+    updatedAtEpochSec = updatedAt.epochSecond,
+    temperatureUnit = settings.temperatureUnit.name,
+    windSpeedUnit = settings.windSpeedUnit.name,
 )
 
-/** Срез: от текущего часа включительно, не более [HOURS_IN_FORECAST] элементов. */
-internal fun HourlyDto.toHourlyForecasts(from: LocalDateTime): List<HourlyForecast> =
-    time.indices
+/**
+ * «Сшивает» параллельные массивы; срез — от текущего часа [currentTime] включительно,
+ * не более [HOURS_IN_FORECAST]. Рассинхрон массивов бросает исключение —
+ * репозиторий превращает его в AppError.Unknown.
+ */
+internal fun HourlyDto.toHourlyForecastEntities(
+    locationId: Long,
+    currentTime: String,
+): List<HourlyForecastEntity> {
+    val from = LocalDateTime.parse(currentTime).truncatedTo(ChronoUnit.HOURS)
+    return time.indices
         .asSequence()
+        .filter { i -> LocalDateTime.parse(time[i]) >= from }
+        .take(HOURS_IN_FORECAST)
         .map { i ->
-            HourlyForecast(
-                time = LocalDateTime.parse(time[i]),
+            HourlyForecastEntity(
+                locationId = locationId,
+                time = time[i],
                 temperature = temperature[i],
-                weatherType = WeatherType.fromWmoCode(weatherCode[i]),
+                wmoCode = weatherCode[i],
                 precipitationProbability = precipitationProbability.getOrNull(i) ?: 0,
             )
         }
-        .filter { it.time >= from }
-        .take(HOURS_IN_FORECAST)
         .toList()
+}
 
-internal fun DailyDto.toDailyForecasts(): List<DailyForecast> =
+internal fun DailyDto.toDailyForecastEntities(locationId: Long): List<DailyForecastEntity> =
     time.indices.map { i ->
-        DailyForecast(
-            date = LocalDate.parse(time[i]),
+        DailyForecastEntity(
+            locationId = locationId,
+            date = time[i],
             tempMin = temperatureMin[i],
             tempMax = temperatureMax[i],
-            weatherType = WeatherType.fromWmoCode(weatherCode[i]),
-            sunrise = LocalDateTime.parse(sunrise[i]),
-            sunset = LocalDateTime.parse(sunset[i]),
+            wmoCode = weatherCode[i],
+            sunrise = sunrise[i],
+            sunset = sunset[i],
         )
     }
+
+// ---------- Entity → домен (чтение при observe) ----------
+
+internal fun toWeatherData(
+    location: LocationEntity,
+    current: CurrentWeatherEntity,
+    hourly: List<HourlyForecastEntity>,
+    daily: List<DailyForecastEntity>,
+): WeatherData = WeatherData(
+    location = location.toLocation(),
+    current = CurrentWeather(
+        temperature = current.temperature,
+        feelsLike = current.feelsLike,
+        humidityPercent = current.humidityPercent,
+        pressureHpa = current.pressureHpa,
+        windSpeed = current.windSpeed,
+        weatherType = WeatherType.fromWmoCode(current.wmoCode),
+        isDay = current.isDay,
+    ),
+    hourly = hourly.map { it.toHourlyForecast() },
+    daily = daily.map { it.toDailyForecast() },
+    updatedAt = Instant.ofEpochSecond(current.updatedAtEpochSec),
+)
+
+internal fun LocationEntity.toLocation(): Location = Location(
+    id = id,
+    name = name,
+    region = region,
+    country = country,
+    latitude = latitude,
+    longitude = longitude,
+)
+
+internal fun HourlyForecastEntity.toHourlyForecast(): HourlyForecast = HourlyForecast(
+    time = LocalDateTime.parse(time),
+    temperature = temperature,
+    weatherType = WeatherType.fromWmoCode(wmoCode),
+    precipitationProbability = precipitationProbability,
+)
+
+internal fun DailyForecastEntity.toDailyForecast(): DailyForecast = DailyForecast(
+    date = LocalDate.parse(date),
+    tempMin = tempMin,
+    tempMax = tempMax,
+    weatherType = WeatherType.fromWmoCode(wmoCode),
+    sunrise = LocalDateTime.parse(sunrise),
+    sunset = LocalDateTime.parse(sunset),
+)

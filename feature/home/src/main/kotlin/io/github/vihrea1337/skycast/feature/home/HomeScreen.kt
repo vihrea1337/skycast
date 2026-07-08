@@ -12,10 +12,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -33,6 +39,7 @@ import io.github.vihrea1337.skycast.core.model.CurrentWeather
 import io.github.vihrea1337.skycast.core.model.Location
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.model.WeatherType
+import java.time.Duration
 import java.time.Instant
 import kotlin.math.roundToInt
 
@@ -43,23 +50,51 @@ fun HomeRoute(
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    HomeScreen(state = uiState, onRetry = viewModel::onRetry, modifier = modifier)
+    HomeScreen(
+        state = uiState,
+        onRefresh = viewModel::onRefresh,
+        onTransientErrorShown = viewModel::onTransientErrorShown,
+        modifier = modifier,
+    )
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun HomeScreen(
     state: HomeUiState,
-    onRetry: () -> Unit,
+    onRefresh: () -> Unit,
+    onTransientErrorShown: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    when (state) {
-        HomeUiState.Loading -> LoadingContent(modifier)
-        is HomeUiState.Error -> ErrorContent(
-            message = state.error.toMessage(),
-            onRetry = onRetry,
-            modifier = modifier,
+    val snackbarHostState = remember { SnackbarHostState() }
+    val transientMessage = (state as? HomeUiState.Content)?.transientError?.toMessage()
+    LaunchedEffect(transientMessage) {
+        if (transientMessage != null) {
+            snackbarHostState.showSnackbar(transientMessage)
+            onTransientErrorShown()
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        when (state) {
+            HomeUiState.Loading -> LoadingContent()
+
+            is HomeUiState.Error -> ErrorContent(
+                message = state.error.toMessage(),
+                onRetry = onRefresh,
+            )
+
+            is HomeUiState.Content -> PullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = onRefresh,
+            ) {
+                WeatherContent(weather = state.weather)
+            }
+        }
+        SnackbarHost(
+            hostState = snackbarHostState,
+            modifier = Modifier.align(Alignment.BottomCenter),
         )
-        is HomeUiState.Content -> WeatherContent(weather = state.weather, modifier = modifier)
     }
 }
 
@@ -83,6 +118,11 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
         Text(
             text = weather.location.name,
             style = MaterialTheme.typography.headlineMedium,
+        )
+        Text(
+            text = updatedAgoText(weather.updatedAt),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(24.dp))
         WeatherIcon(
@@ -128,6 +168,18 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
 private fun formatTemperature(value: Double): String = "${value.roundToInt()}°"
 
 @Composable
+private fun updatedAgoText(updatedAt: Instant): String {
+    val minutes = Duration.between(updatedAt, Instant.now()).toMinutes()
+    return when {
+        minutes < 1 -> stringResource(R.string.feature_home_updated_just_now)
+        minutes < MINUTES_IN_HOUR -> stringResource(R.string.feature_home_updated_minutes_ago, minutes)
+        else -> stringResource(R.string.feature_home_updated_hours_ago, minutes / MINUTES_IN_HOUR)
+    }
+}
+
+private const val MINUTES_IN_HOUR = 60L
+
+@Composable
 private fun AppError.toMessage(): String = when (this) {
     AppError.Network -> stringResource(R.string.feature_home_error_network)
     is AppError.Server -> stringResource(R.string.feature_home_error_server, code)
@@ -138,7 +190,11 @@ private fun AppError.toMessage(): String = when (this) {
 @Composable
 private fun HomeScreenContentPreview() {
     SkyCastTheme {
-        HomeScreen(state = HomeUiState.Content(previewWeather), onRetry = {})
+        HomeScreen(
+            state = HomeUiState.Content(previewWeather, isRefreshing = false, transientError = null),
+            onRefresh = {},
+            onTransientErrorShown = {},
+        )
     }
 }
 
@@ -146,7 +202,11 @@ private fun HomeScreenContentPreview() {
 @Composable
 private fun HomeScreenErrorPreview() {
     SkyCastTheme {
-        HomeScreen(state = HomeUiState.Error(AppError.Network), onRetry = {})
+        HomeScreen(
+            state = HomeUiState.Error(AppError.Network),
+            onRefresh = {},
+            onTransientErrorShown = {},
+        )
     }
 }
 
@@ -170,5 +230,5 @@ private val previewWeather = WeatherData(
     ),
     hourly = emptyList(),
     daily = emptyList(),
-    updatedAt = Instant.EPOCH,
+    updatedAt = Instant.now(),
 )

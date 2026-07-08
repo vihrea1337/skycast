@@ -1,6 +1,10 @@
 package io.github.vihrea1337.skycast.core.data.mapper
 
-import io.github.vihrea1337.skycast.core.model.Location
+import io.github.vihrea1337.skycast.core.database.entity.CurrentWeatherEntity
+import io.github.vihrea1337.skycast.core.database.entity.DailyForecastEntity
+import io.github.vihrea1337.skycast.core.database.entity.HourlyForecastEntity
+import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
+import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherType
 import io.github.vihrea1337.skycast.core.network.dto.CurrentDto
 import io.github.vihrea1337.skycast.core.network.dto.DailyDto
@@ -15,66 +19,39 @@ import java.time.LocalDateTime
 
 class ForecastMappersTest {
 
-    @Test
-    fun `parallel arrays are stitched by index`() {
-        val hourly = HourlyDto(
-            time = listOf("2026-07-08T14:00", "2026-07-08T15:00"),
-            temperature = listOf(21.4, 22.1),
-            weatherCode = listOf(3, 61),
-            precipitationProbability = listOf(10, 55),
-        )
-
-        val result = hourly.toHourlyForecasts(from = LocalDateTime.parse("2026-07-08T14:00"))
-
-        assertEquals(2, result.size)
-        assertEquals(22.1, result[1].temperature, 0.0)
-        assertEquals(WeatherType.RAIN, result[1].weatherType)
-        assertEquals(55, result[1].precipitationProbability)
-    }
+    // ---------- DTO → Entity ----------
 
     @Test
-    fun `hours before current hour are dropped and slice is limited to 24`() {
-        val times = (0 until 48).map { hour ->
-            val day = if (hour < 24) "08" else "09"
-            "2026-07-${day}T%02d:00".format(hour % 24)
-        }
+    fun `hourly slice starts at current hour and is limited to 24`() {
         val hourly = HourlyDto(
-            time = times,
+            time = (0 until 48).map { hour ->
+                val day = if (hour < 24) "08" else "09"
+                "2026-07-${day}T%02d:00".format(hour % 24)
+            },
             temperature = List(48) { it.toDouble() },
             weatherCode = List(48) { 0 },
             precipitationProbability = List(48) { it },
         )
 
-        val result = hourly.toHourlyForecasts(from = LocalDateTime.parse("2026-07-08T14:00"))
+        val result = hourly.toHourlyForecastEntities(locationId = 1, currentTime = "2026-07-08T14:25")
 
         assertEquals(HOURS_IN_FORECAST, result.size)
-        assertEquals(LocalDateTime.parse("2026-07-08T14:00"), result.first().time)
+        assertEquals("2026-07-08T14:00", result.first().time) // усечение к началу часа
         assertEquals(14.0, result.first().temperature, 0.0)
     }
 
     @Test
-    fun `null precipitation probability degrades to zero`() {
-        val hourly = HourlyDto(
+    fun `null and missing precipitation degrade to zero`() {
+        val withNull = HourlyDto(
             time = listOf("2026-07-08T14:00"),
             temperature = listOf(21.4),
             weatherCode = listOf(0),
             precipitationProbability = listOf(null),
         )
+        val withoutArray = withNull.copy(precipitationProbability = emptyList())
 
-        val result = hourly.toHourlyForecasts(from = LocalDateTime.parse("2026-07-08T00:00"))
-
-        assertEquals(0, result.single().precipitationProbability)
-    }
-
-    @Test
-    fun `missing precipitation array degrades to zero`() {
-        val hourly = HourlyDto(
-            time = listOf("2026-07-08T14:00"),
-            temperature = listOf(21.4),
-            weatherCode = listOf(0),
-        )
-
-        assertEquals(0, hourly.toHourlyForecasts(from = LocalDateTime.MIN).single().precipitationProbability)
+        assertEquals(0, withNull.toHourlyForecastEntities(1, "2026-07-08T00:00").single().precipitationProbability)
+        assertEquals(0, withoutArray.toHourlyForecastEntities(1, "2026-07-08T00:00").single().precipitationProbability)
     }
 
     @Test
@@ -86,54 +63,104 @@ class ForecastMappersTest {
         )
 
         assertThrows(IndexOutOfBoundsException::class.java) {
-            broken.toHourlyForecasts(from = LocalDateTime.MIN)
+            broken.toHourlyForecastEntities(locationId = 1, currentTime = "2026-07-08T00:00")
         }
     }
 
     @Test
-    fun `full response maps current daily and metadata`() {
-        val dto = ForecastResponseDto(
-            current = CurrentDto(
-                time = "2026-07-08T14:00",
-                temperature = 21.4,
-                feelsLike = 19.8,
-                humidityPercent = 62,
-                weatherCode = 3,
-                windSpeed = 4.2,
-                pressureHpa = 1006.9,
-                isDay = 1,
-            ),
-            hourly = HourlyDto(
-                time = listOf("2026-07-08T14:00"),
-                temperature = listOf(21.4),
-                weatherCode = listOf(3),
-            ),
-            daily = DailyDto(
-                time = listOf("2026-07-08"),
-                weatherCode = listOf(61),
-                temperatureMax = listOf(22.5),
-                temperatureMin = listOf(14.1),
-                sunrise = listOf("2026-07-08T02:57"),
-                sunset = listOf("2026-07-08T22:12"),
-            ),
-        )
+    fun `current dto keeps sync units and timestamp`() {
+        val dto = sampleDto()
         val updatedAt = Instant.parse("2026-07-08T09:00:00Z")
 
-        val data = dto.toWeatherData(location = petrozavodsk, updatedAt = updatedAt)
+        val entity = dto.toCurrentWeatherEntity(locationId = 1, settings = UserSettings.Default, updatedAt = updatedAt)
 
-        assertEquals(petrozavodsk, data.location)
-        assertEquals(WeatherType.OVERCAST, data.current.weatherType)
-        assertTrue(data.current.isDay)
-        assertEquals(WeatherType.RAIN, data.daily.single().weatherType)
-        assertEquals(updatedAt, data.updatedAt)
+        assertEquals(updatedAt.epochSecond, entity.updatedAtEpochSec)
+        assertEquals("CELSIUS", entity.temperatureUnit)
+        assertEquals("METERS_PER_SECOND", entity.windSpeedUnit)
+        assertTrue(entity.isDay)
     }
 
-    private val petrozavodsk = Location(
-        id = 509820,
-        name = "Петрозаводск",
-        region = "Карелия",
-        country = "Россия",
-        latitude = 61.78491,
-        longitude = 34.34691,
+    // ---------- Entity → домен ----------
+
+    @Test
+    fun `entities map to domain weather with wmo decoding`() {
+        val location = LocationEntity(
+            id = 509820,
+            name = "Петрозаводск",
+            region = "Карелия",
+            country = "Россия",
+            latitude = 61.78491,
+            longitude = 34.34691,
+            isSelected = true,
+            sortOrder = 0,
+        )
+        val current = CurrentWeatherEntity(
+            locationId = 509820,
+            temperature = 21.4,
+            feelsLike = 19.8,
+            humidityPercent = 62,
+            pressureHpa = 1006.9,
+            windSpeed = 4.2,
+            wmoCode = 95,
+            isDay = false,
+            updatedAtEpochSec = 1_784_000_000,
+            temperatureUnit = "CELSIUS",
+            windSpeedUnit = "METERS_PER_SECOND",
+        )
+        val hourly = listOf(
+            HourlyForecastEntity(
+                locationId = 509820,
+                time = "2026-07-08T15:00",
+                temperature = 22.1,
+                wmoCode = 61,
+                precipitationProbability = 55,
+            ),
+        )
+        val daily = listOf(
+            DailyForecastEntity(
+                locationId = 509820,
+                date = "2026-07-08",
+                tempMin = 14.1,
+                tempMax = 22.5,
+                wmoCode = 71,
+                sunrise = "2026-07-08T02:57",
+                sunset = "2026-07-08T22:12",
+            ),
+        )
+
+        val weather = toWeatherData(location, current, hourly, daily)
+
+        assertEquals("Петрозаводск", weather.location.name)
+        assertEquals(WeatherType.THUNDERSTORM, weather.current.weatherType)
+        assertEquals(WeatherType.RAIN, weather.hourly.single().weatherType)
+        assertEquals(LocalDateTime.parse("2026-07-08T15:00"), weather.hourly.single().time)
+        assertEquals(WeatherType.SNOW, weather.daily.single().weatherType)
+        assertEquals(Instant.ofEpochSecond(1_784_000_000), weather.updatedAt)
+    }
+
+    private fun sampleDto() = ForecastResponseDto(
+        current = CurrentDto(
+            time = "2026-07-08T14:00",
+            temperature = 21.4,
+            feelsLike = 19.8,
+            humidityPercent = 62,
+            weatherCode = 3,
+            windSpeed = 4.2,
+            pressureHpa = 1006.9,
+            isDay = 1,
+        ),
+        hourly = HourlyDto(
+            time = listOf("2026-07-08T14:00"),
+            temperature = listOf(21.4),
+            weatherCode = listOf(3),
+        ),
+        daily = DailyDto(
+            time = listOf("2026-07-08"),
+            weatherCode = listOf(3),
+            temperatureMax = listOf(22.5),
+            temperatureMin = listOf(14.1),
+            sunrise = listOf("2026-07-08T02:57"),
+            sunset = listOf("2026-07-08T22:12"),
+        ),
     )
 }

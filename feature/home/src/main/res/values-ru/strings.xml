@@ -1,6 +1,10 @@
 <resources>
     <string name="feature_home_feels_like">Ощущается как %1$s</string>
 
+    <string name="feature_home_updated_just_now">Обновлено только что</string>
+    <string name="feature_home_updated_minutes_ago">Обновлено %1$d мин назад</string>
+    <string name="feature_home_updated_hours_ago">Обновлено %1$d ч назад</string>
+
     <string name="feature_home_wind">Ветер</string>
     <string name="feature_home_wind_value">%1$s м/с</string>
     <string name="feature_home_humidity">Влажность</string>

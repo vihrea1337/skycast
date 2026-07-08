@@ -1,16 +1,24 @@
 package io.github.vihrea1337.skycast.core.data.repository
 
 import io.github.vihrea1337.skycast.core.common.result.AppResult
-import io.github.vihrea1337.skycast.core.model.Location
-import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherData
+import kotlinx.coroutines.flow.Flow
 
 /**
- * Этап 2: прямой запрос в сеть без кэша.
- * На этапе 3 контракт станет offline-first: observeWeather(): Flow из Room + refresh()
- * (docs/PLAN.md §5.7) — вызывающий код поменяется минимально.
+ * Offline-first контракт (docs/PLAN.md §5.7): Room — единственный источник правды.
+ * UI никогда не читает из сети напрямую.
  */
 interface WeatherRepository {
 
-    suspend fun getWeather(location: Location, settings: UserSettings): AppResult<WeatherData>
+    /**
+     * Погода выбранного города из локального кэша.
+     * null — кэша ещё нет (первый запуск до успешного refresh).
+     */
+    fun observeWeather(): Flow<WeatherData?>
+
+    /**
+     * Сеть → Room. Данные придут реактивно через [observeWeather];
+     * наружу — только успех/типизированная ошибка. Кэш при ошибке не трогается.
+     */
+    suspend fun refresh(): AppResult<Unit>
 }

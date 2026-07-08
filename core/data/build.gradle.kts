@@ -38,6 +38,7 @@ dependencies {
     api(project(":core:model"))
     api(project(":core:common"))
     implementation(project(":core:network"))
+    implementation(project(":core:database"))
 
     implementation(libs.kotlinx.coroutines.core)
 
