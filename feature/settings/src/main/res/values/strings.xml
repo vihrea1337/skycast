@@ -15,6 +15,9 @@
     <string name="feature_settings_theme_light">Light</string>
     <string name="feature_settings_theme_dark">Dark</string>
 
+    <string name="feature_settings_widget">Widget</string>
+    <string name="feature_settings_add_widget">Add widget to home screen</string>
+
     <string name="feature_settings_about">About</string>
     <string name="feature_settings_attribution">Weather data by Open-Meteo.com (CC-BY 4.0)</string>
     <string name="feature_settings_source_code">Source code on GitHub</string>

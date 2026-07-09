@@ -11,6 +11,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -45,9 +46,11 @@ fun SettingsRoute(
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     SettingsScreen(
         settings = settings,
+        isPinWidgetSupported = viewModel.isPinWidgetSupported,
         onTemperatureUnitChange = viewModel::onTemperatureUnitChange,
         onWindSpeedUnitChange = viewModel::onWindSpeedUnitChange,
         onThemeChange = viewModel::onThemeChange,
+        onAddWidgetClick = viewModel::onAddWidgetClick,
         onBack = onBack,
         modifier = modifier,
     )
@@ -57,9 +60,11 @@ fun SettingsRoute(
 @Composable
 internal fun SettingsScreen(
     settings: UserSettings?,
+    isPinWidgetSupported: Boolean,
     onTemperatureUnitChange: (TemperatureUnit) -> Unit,
     onWindSpeedUnitChange: (WindSpeedUnit) -> Unit,
     onThemeChange: (ThemeMode) -> Unit,
+    onAddWidgetClick: () -> Unit,
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -128,6 +133,13 @@ internal fun SettingsScreen(
                         onClick = { onThemeChange(mode) },
                     )
                     Text(mode.label())
+                }
+            }
+
+            if (isPinWidgetSupported) {
+                SectionTitle(stringResource(R.string.feature_settings_widget))
+                Button(onClick = onAddWidgetClick) {
+                    Text(stringResource(R.string.feature_settings_add_widget))
                 }
             }
 

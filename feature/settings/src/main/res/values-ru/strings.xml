@@ -13,6 +13,9 @@
     <string name="feature_settings_theme_light">Светлая</string>
     <string name="feature_settings_theme_dark">Тёмная</string>
 
+    <string name="feature_settings_widget">Виджет</string>
+    <string name="feature_settings_add_widget">Добавить виджет на главный экран</string>
+
     <string name="feature_settings_about">О приложении</string>
     <string name="feature_settings_attribution">Данные о погоде: Open-Meteo.com (CC-BY 4.0)</string>
     <string name="feature_settings_source_code">Исходный код на GitHub</string>

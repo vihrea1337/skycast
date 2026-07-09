@@ -3,6 +3,7 @@ package io.github.vihrea1337.skycast.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.vihrea1337.skycast.core.data.widget.WidgetPinner
 import io.github.vihrea1337.skycast.core.domain.settings.ObserveSettingsUseCase
 import io.github.vihrea1337.skycast.core.domain.settings.UpdateSettingsUseCase
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
@@ -19,7 +20,15 @@ import javax.inject.Inject
 class SettingsViewModel @Inject constructor(
     observeSettings: ObserveSettingsUseCase,
     private val updateSettings: UpdateSettingsUseCase,
+    private val widgetPinner: WidgetPinner,
 ) : ViewModel() {
+
+    /** Кнопка «добавить виджет» видна только если лаунчер поддерживает закрепление. */
+    val isPinWidgetSupported: Boolean get() = widgetPinner.isPinSupported
+
+    fun onAddWidgetClick() {
+        viewModelScope.launch { widgetPinner.requestPin() }
+    }
 
     /**
      * Никакого локального стейта-копии: записали в DataStore → Flow вернул

@@ -7,7 +7,9 @@ import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import io.github.vihrea1337.skycast.core.data.widget.WidgetPinner
 import io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater
+import io.github.vihrea1337.skycast.widget.GlanceWidgetPinner
 import io.github.vihrea1337.skycast.widget.WeatherWidget
 import javax.inject.Inject
 
@@ -27,4 +29,7 @@ internal abstract class WidgetModule {
 
     @Binds
     abstract fun bindsWidgetUpdater(impl: GlanceWidgetUpdater): WidgetUpdater
+
+    @Binds
+    abstract fun bindsWidgetPinner(impl: GlanceWidgetPinner): WidgetPinner
 }
