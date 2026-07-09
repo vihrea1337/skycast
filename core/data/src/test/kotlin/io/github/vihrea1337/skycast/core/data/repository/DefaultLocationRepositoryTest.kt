@@ -57,6 +57,19 @@ class DefaultLocationRepositoryTest {
     }
 
     @Test
+    fun `changing selection refreshes the widget even without a network sync`() = runTest {
+        // Регрессия: виджет застревал на старом городе, если у нового кэш был свежим
+        val repository = repository(FakeNetworkDataSource())
+        repository.saveAndSelect(petrozavodsk)
+        repository.saveAndSelect(moscow)
+        widgetUpdater.updateCount = 0
+
+        repository.select(petrozavodsk.id)
+
+        assertEquals(1, widgetUpdater.updateCount)
+    }
+
+    @Test
     fun `deleting selected location reselects first remaining`() = runTest {
         val repository = repository(FakeNetworkDataSource())
         repository.saveAndSelect(petrozavodsk)
@@ -107,6 +120,8 @@ class DefaultLocationRepositoryTest {
         assertEquals(emptyList<Location>(), repository.observeSavedLocations().first())
     }
 
+    private val widgetUpdater = RecordingWidgetUpdater()
+
     private fun TestScope.repository(
         network: NetworkDataSource,
         positionProvider: CurrentPositionProvider = FakePositionProvider(position = null, locality = null),
@@ -114,8 +129,16 @@ class DefaultLocationRepositoryTest {
         locationDao = locationDao,
         network = network,
         positionProvider = positionProvider,
+        widgetUpdater = widgetUpdater,
         ioDispatcher = StandardTestDispatcher(testScheduler),
     )
+
+    private class RecordingWidgetUpdater : io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater {
+        var updateCount = 0
+        override suspend fun updateAll() {
+            updateCount++
+        }
+    }
 
     private class FakePositionProvider(
         private val position: CurrentPositionProvider.Position?,

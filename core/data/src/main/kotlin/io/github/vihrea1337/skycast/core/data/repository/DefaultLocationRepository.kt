@@ -7,6 +7,7 @@ import io.github.vihrea1337.skycast.core.common.result.AppResult
 import io.github.vihrea1337.skycast.core.data.location.CurrentPositionProvider
 import io.github.vihrea1337.skycast.core.data.mapper.toEntity
 import io.github.vihrea1337.skycast.core.data.mapper.toLocation
+import io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater
 import io.github.vihrea1337.skycast.core.database.dao.LocationDao
 import io.github.vihrea1337.skycast.core.model.Location
 import io.github.vihrea1337.skycast.core.network.NetworkDataSource
@@ -23,6 +24,7 @@ internal class DefaultLocationRepository @Inject constructor(
     private val locationDao: LocationDao,
     private val network: NetworkDataSource,
     private val positionProvider: CurrentPositionProvider,
+    private val widgetUpdater: WidgetUpdater,
     @Dispatcher(DispatcherType.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : LocationRepository {
 
@@ -38,12 +40,18 @@ internal class DefaultLocationRepository @Inject constructor(
             is AppResult.Success -> AppResult.Success(result.data.map { it.toLocation() })
         }
 
+    // Виджет показывает погоду ВЫБРАННОГО города, поэтому любая смена выбора —
+    // повод перерисовать его, даже без сетевого refresh (кэш нового города может
+    // быть свежим — тогда refresh не случится, а виджет иначе застрянет на старом городе)
+
     override suspend fun saveAndSelect(location: Location) {
         locationDao.saveAndSelect(location.toEntity(isSelected = true))
+        widgetUpdater.updateAll()
     }
 
     override suspend fun select(id: Long) {
         locationDao.select(id)
+        widgetUpdater.updateAll()
     }
 
     override suspend fun delete(id: Long) {
@@ -51,6 +59,7 @@ internal class DefaultLocationRepository @Inject constructor(
         locationDao.delete(id)
         if (wasSelected) {
             locationDao.observeAll().first().firstOrNull()?.let { locationDao.select(it.id) }
+            widgetUpdater.updateAll()
         }
     }
 
