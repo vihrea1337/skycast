@@ -3,8 +3,8 @@ package io.github.vihrea1337.skycast.feature.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import io.github.vihrea1337.skycast.core.data.repository.SettingsRepository
-import io.github.vihrea1337.skycast.core.data.repository.WeatherRepository
+import io.github.vihrea1337.skycast.core.domain.settings.ObserveSettingsUseCase
+import io.github.vihrea1337.skycast.core.domain.settings.UpdateSettingsUseCase
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.ThemeMode
 import io.github.vihrea1337.skycast.core.model.UserSettings
@@ -17,39 +17,27 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository,
-    private val weatherRepository: WeatherRepository,
+    observeSettings: ObserveSettingsUseCase,
+    private val updateSettings: UpdateSettingsUseCase,
 ) : ViewModel() {
 
     /**
      * Никакого локального стейта-копии: записали в DataStore → Flow вернул
      * новое значение → UI обновился. null — настройки ещё читаются.
      */
-    val settings: StateFlow<UserSettings?> = settingsRepository.settings
+    val settings: StateFlow<UserSettings?> = observeSettings()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), null)
 
-    /**
-     * Единицы конвертирует сервер (docs/PLAN.md §5.4), поэтому смена требует refresh.
-     * Если сети нет — данные остаются в старых единицах со СТАРЫМИ подписями:
-     * подписи берутся из units-at-sync, рассинхрона не будет (§5.12).
-     * На этапе 5 сценарий переедет в use case.
-     */
     fun onTemperatureUnitChange(unit: TemperatureUnit) {
-        viewModelScope.launch {
-            settingsRepository.setTemperatureUnit(unit)
-            weatherRepository.refresh()
-        }
+        viewModelScope.launch { updateSettings.temperatureUnit(unit) }
     }
 
     fun onWindSpeedUnitChange(unit: WindSpeedUnit) {
-        viewModelScope.launch {
-            settingsRepository.setWindSpeedUnit(unit)
-            weatherRepository.refresh()
-        }
+        viewModelScope.launch { updateSettings.windSpeedUnit(unit) }
     }
 
     fun onThemeChange(mode: ThemeMode) {
-        viewModelScope.launch { settingsRepository.setTheme(mode) }
+        viewModelScope.launch { updateSettings.theme(mode) }
     }
 
     companion object {

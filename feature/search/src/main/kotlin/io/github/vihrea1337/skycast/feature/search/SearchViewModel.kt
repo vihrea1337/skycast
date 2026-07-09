@@ -4,7 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.vihrea1337.skycast.core.common.result.AppResult
-import io.github.vihrea1337.skycast.core.data.repository.LocationRepository
+import io.github.vihrea1337.skycast.core.domain.location.DeleteLocationUseCase
+import io.github.vihrea1337.skycast.core.domain.location.DetectMyLocationUseCase
+import io.github.vihrea1337.skycast.core.domain.location.ObserveSavedLocationsUseCase
+import io.github.vihrea1337.skycast.core.domain.location.ObserveSelectedLocationUseCase
+import io.github.vihrea1337.skycast.core.domain.location.SaveLocationUseCase
+import io.github.vihrea1337.skycast.core.domain.location.SearchCityUseCase
+import io.github.vihrea1337.skycast.core.domain.location.SelectLocationUseCase
 import io.github.vihrea1337.skycast.core.model.Location
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -25,7 +31,13 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val locationRepository: LocationRepository,
+    private val searchCity: SearchCityUseCase,
+    observeSavedLocations: ObserveSavedLocationsUseCase,
+    observeSelectedLocation: ObserveSelectedLocationUseCase,
+    private val selectLocation: SelectLocationUseCase,
+    private val saveLocation: SaveLocationUseCase,
+    private val deleteLocation: DeleteLocationUseCase,
+    private val detectMyLocation: DetectMyLocationUseCase,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -48,7 +60,7 @@ class SearchViewModel @Inject constructor(
             }
             emit(SearchResultsState.Searching)
             emit(
-                when (val result = locationRepository.search(text)) {
+                when (val result = searchCity(text)) {
                     is AppResult.Failure -> SearchResultsState.SearchError(result.error)
                     is AppResult.Success ->
                         if (result.data.isEmpty()) {
@@ -62,8 +74,8 @@ class SearchViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), SearchResultsState.Idle)
 
     val savedLocations: StateFlow<List<SavedLocationItem>> = combine(
-        locationRepository.observeSavedLocations(),
-        locationRepository.observeSelected(),
+        observeSavedLocations(),
+        observeSelectedLocation(),
     ) { saved, selected ->
         saved.map { SavedLocationItem(location = it, isSelected = it.id == selected?.id) }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STOP_TIMEOUT_MS), emptyList())
@@ -84,31 +96,28 @@ class SearchViewModel @Inject constructor(
     /** Результат геокодинга сохраняется только по явному клику (docs/PLAN.md §5.11). */
     fun onResultClick(location: Location) {
         viewModelScope.launch {
-            locationRepository.saveAndSelect(location)
+            saveLocation(location)
             _navigateBack.tryEmit(Unit)
         }
     }
 
     fun onSavedClick(id: Long) {
         viewModelScope.launch {
-            locationRepository.select(id)
+            selectLocation(id)
             _navigateBack.tryEmit(Unit)
         }
     }
 
     fun onDeleteSaved(id: Long) {
-        viewModelScope.launch { locationRepository.delete(id) }
+        viewModelScope.launch { deleteLocation(id) }
     }
 
     /** Вызывается, когда разрешение уже выдано — проверяет UI-слой. */
     fun onUseMyLocation() {
         viewModelScope.launch {
             _isDetecting.value = true
-            when (val result = locationRepository.detectCurrent()) {
-                is AppResult.Success -> {
-                    locationRepository.saveAndSelect(result.data)
-                    _navigateBack.tryEmit(Unit)
-                }
+            when (detectMyLocation()) {
+                is AppResult.Success -> _navigateBack.tryEmit(Unit)
                 is AppResult.Failure -> _message.value = SearchMessage.DETECT_FAILED
             }
             _isDetecting.value = false

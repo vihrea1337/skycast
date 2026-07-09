@@ -60,7 +60,7 @@ dependencies {
     implementation(project(":feature:search"))
     implementation(project(":feature:settings"))
     implementation(project(":core:designsystem"))
-    implementation(project(":core:data"))
+    implementation(project(":core:domain"))
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.core.splashscreen)
