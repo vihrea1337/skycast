@@ -31,6 +31,8 @@ data class HourlyDto(
     @SerialName("weather_code") val weatherCode: List<Int>,
     // Вероятность осадков может отсутствовать или содержать null-элементы
     @SerialName("precipitation_probability") val precipitationProbability: List<Int?> = emptyList(),
+    // День/ночь для каждого часа — влияет на иконку (солнце/луна)
+    @SerialName("is_day") val isDay: List<Int> = emptyList(),
 )
 
 @Serializable

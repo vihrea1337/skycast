@@ -8,4 +8,6 @@ data class HourlyForecast(
     val temperature: Double,
     val weatherType: WeatherType,
     val precipitationProbability: Int,
+    /** День/ночь в этот час — влияет на иконку (солнце/луна). */
+    val isDay: Boolean,
 )

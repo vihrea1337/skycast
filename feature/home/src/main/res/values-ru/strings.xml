@@ -1,6 +1,12 @@
 <resources>
     <string name="feature_home_feels_like">Ощущается как %1$s</string>
 
+    <string name="feature_home_hourly_title">Сегодня по часам</string>
+    <string name="feature_home_daily_title">7 дней</string>
+    <string name="feature_home_hour_now">Сейчас</string>
+    <string name="feature_home_today">Сегодня</string>
+    <string name="feature_home_sun_times">Восход %1$s · Закат %2$s</string>
+
     <string name="feature_home_updated_just_now">Обновлено только что</string>
     <string name="feature_home_updated_minutes_ago">Обновлено %1$d мин назад</string>
     <string name="feature_home_updated_hours_ago">Обновлено %1$d ч назад</string>

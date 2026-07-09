@@ -25,4 +25,5 @@ data class HourlyForecastEntity(
     val temperature: Double,
     val wmoCode: Int,
     val precipitationProbability: Int,
+    val isDay: Boolean,
 )

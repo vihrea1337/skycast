@@ -41,6 +41,17 @@ class ForecastMappersTest {
     }
 
     @Test
+    fun `missing is_day array degrades to day icon`() {
+        val hourly = HourlyDto(
+            time = listOf("2026-07-08T14:00"),
+            temperature = listOf(21.4),
+            weatherCode = listOf(0),
+        )
+
+        assertTrue(hourly.toHourlyForecastEntities(1, "2026-07-08T00:00").single().isDay)
+    }
+
+    @Test
     fun `null and missing precipitation degrade to zero`() {
         val withNull = HourlyDto(
             time = listOf("2026-07-08T14:00"),
@@ -114,6 +125,7 @@ class ForecastMappersTest {
                 temperature = 22.1,
                 wmoCode = 61,
                 precipitationProbability = 55,
+                isDay = false,
             ),
         )
         val daily = listOf(
@@ -134,6 +146,7 @@ class ForecastMappersTest {
         assertEquals(WeatherType.THUNDERSTORM, weather.current.weatherType)
         assertEquals(WeatherType.RAIN, weather.hourly.single().weatherType)
         assertEquals(LocalDateTime.parse("2026-07-08T15:00"), weather.hourly.single().time)
+        assertEquals(false, weather.hourly.single().isDay)
         assertEquals(WeatherType.SNOW, weather.daily.single().weatherType)
         assertEquals(Instant.ofEpochSecond(1_784_000_000), weather.updatedAt)
     }

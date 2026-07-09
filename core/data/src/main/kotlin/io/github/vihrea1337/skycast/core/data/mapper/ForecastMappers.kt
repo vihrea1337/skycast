@@ -62,6 +62,8 @@ internal fun HourlyDto.toHourlyForecastEntities(
                 temperature = temperature[i],
                 wmoCode = weatherCode[i],
                 precipitationProbability = precipitationProbability.getOrNull(i) ?: 0,
+                // Отсутствие массива деградирует в «день» — нейтральная иконка
+                isDay = isDay.getOrNull(i) != 0,
             )
         }
         .toList()
@@ -123,6 +125,7 @@ internal fun HourlyForecastEntity.toHourlyForecast(): HourlyForecast = HourlyFor
     temperature = temperature,
     weatherType = WeatherType.fromWmoCode(wmoCode),
     precipitationProbability = precipitationProbability,
+    isDay = isDay,
 )
 
 internal fun DailyForecastEntity.toDailyForecast(): DailyForecast = DailyForecast(

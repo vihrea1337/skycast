@@ -136,6 +136,7 @@ class DaoTest {
         temperature = 20.0,
         wmoCode = 1,
         precipitationProbability = 10,
+        isDay = true,
     )
 
     private fun day(date: String) = DailyForecastEntity(

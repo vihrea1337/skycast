@@ -56,6 +56,7 @@ class RetrofitNetworkDataSourceTest {
         assertEquals(1, data.current.isDay)
         assertEquals(4, data.hourly.time.size)
         assertEquals(listOf(10, null, 20, 55), data.hourly.precipitationProbability)
+        assertEquals(listOf(1, 1, 0, 0), data.hourly.isDay)
         assertEquals(2, data.daily.time.size)
     }
 

@@ -27,7 +27,7 @@ internal interface ForecastApi {
         const val FORECAST_DAYS = 7
         const val CURRENT_FIELDS = "temperature_2m,apparent_temperature,relative_humidity_2m," +
             "weather_code,wind_speed_10m,surface_pressure,is_day"
-        const val HOURLY_FIELDS = "temperature_2m,weather_code,precipitation_probability"
+        const val HOURLY_FIELDS = "temperature_2m,weather_code,precipitation_probability,is_day"
         const val DAILY_FIELDS = "weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset"
     }
 }

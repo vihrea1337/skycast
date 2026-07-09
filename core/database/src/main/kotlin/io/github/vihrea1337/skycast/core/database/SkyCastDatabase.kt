@@ -21,7 +21,7 @@ import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
         HourlyForecastEntity::class,
         DailyForecastEntity::class,
     ],
-    version = 1,
+    version = 2, // v2: hourly_forecast.isDay
     exportSchema = false,
 )
 internal abstract class SkyCastDatabase : RoomDatabase() {

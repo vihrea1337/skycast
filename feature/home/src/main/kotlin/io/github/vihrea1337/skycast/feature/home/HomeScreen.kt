@@ -15,7 +15,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -40,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.github.vihrea1337.skycast.core.common.result.AppError
 import io.github.vihrea1337.skycast.core.designsystem.component.ErrorContent
 import io.github.vihrea1337.skycast.core.designsystem.component.MetricChip
+import io.github.vihrea1337.skycast.core.designsystem.component.SectionCard
 import io.github.vihrea1337.skycast.core.designsystem.component.WeatherIcon
 import io.github.vihrea1337.skycast.core.designsystem.component.labelRes
 import io.github.vihrea1337.skycast.core.designsystem.theme.SkyCastTheme
@@ -49,6 +49,9 @@ import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.model.WeatherType
 import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
+import io.github.vihrea1337.skycast.feature.home.components.DailyForecastList
+import io.github.vihrea1337.skycast.feature.home.components.HomeSkeleton
+import io.github.vihrea1337.skycast.feature.home.components.HourlyForecastRow
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -113,7 +116,7 @@ internal fun HomeScreen(
                 },
             )
             when (state) {
-                HomeUiState.Loading -> LoadingContent()
+                HomeUiState.Loading -> HomeSkeleton()
 
                 HomeUiState.NoCity -> NoCityContent(onSearchClick = onSearchClick)
 
@@ -134,13 +137,6 @@ internal fun HomeScreen(
             hostState = snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter),
         )
-    }
-}
-
-@Composable
-private fun LoadingContent(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator()
     }
 }
 
@@ -220,6 +216,18 @@ private fun WeatherContent(weather: WeatherData, modifier: Modifier = Modifier) 
                 value = stringResource(R.string.feature_home_pressure_value, current.pressureHpa.roundToInt()),
             )
         }
+        if (weather.hourly.isNotEmpty()) {
+            Spacer(Modifier.height(32.dp))
+            SectionCard(title = stringResource(R.string.feature_home_hourly_title)) {
+                HourlyForecastRow(hours = weather.hourly)
+            }
+        }
+        if (weather.daily.isNotEmpty()) {
+            Spacer(Modifier.height(24.dp))
+            SectionCard(title = stringResource(R.string.feature_home_daily_title)) {
+                DailyForecastList(days = weather.daily)
+            }
+        }
     }
 }
 
@@ -296,8 +304,25 @@ private val previewWeather = WeatherData(
         weatherType = WeatherType.PARTLY_CLOUDY,
         isDay = true,
     ),
-    hourly = emptyList(),
-    daily = emptyList(),
+    hourly = (0 until 6).map { offset ->
+        io.github.vihrea1337.skycast.core.model.HourlyForecast(
+            time = java.time.LocalDateTime.of(2026, 7, 9, 14 + offset, 0),
+            temperature = 21.0 + offset,
+            weatherType = if (offset < 3) WeatherType.PARTLY_CLOUDY else WeatherType.RAIN,
+            precipitationProbability = if (offset < 3) 0 else 55,
+            isDay = offset < 4,
+        )
+    },
+    daily = (0 until 3).map { offset ->
+        io.github.vihrea1337.skycast.core.model.DailyForecast(
+            date = java.time.LocalDate.of(2026, 7, 9).plusDays(offset.toLong()),
+            tempMin = 14.0 + offset,
+            tempMax = 22.0 + offset,
+            weatherType = WeatherType.PARTLY_CLOUDY,
+            sunrise = java.time.LocalDateTime.of(2026, 7, 9, 3, 57),
+            sunset = java.time.LocalDateTime.of(2026, 7, 9, 22, 12),
+        )
+    },
     updatedAt = Instant.now(),
     temperatureUnit = TemperatureUnit.CELSIUS,
     windSpeedUnit = WindSpeedUnit.METERS_PER_SECOND,

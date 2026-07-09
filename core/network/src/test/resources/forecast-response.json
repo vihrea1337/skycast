@@ -21,7 +21,8 @@
     "time": ["2026-07-08T14:00", "2026-07-08T15:00", "2026-07-08T16:00", "2026-07-08T17:00"],
     "temperature_2m": [21.4, 22.1, 22.5, 21.9],
     "weather_code": [3, 2, 1, 61],
-    "precipitation_probability": [10, null, 20, 55]
+    "precipitation_probability": [10, null, 20, 55],
+    "is_day": [1, 1, 0, 0]
   },
   "daily": {
     "time": ["2026-07-08", "2026-07-09"],
