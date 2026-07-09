@@ -1,0 +1,565 @@
+ Все работает отлично, показывает погоду, определяет местоположение в приложении(если оно заранее было включено в насйтроках, выбираются города и разные системы единиц. Продолжи работу на виджетом, СПАСИБО!
+
+Отличные новости — живая проверка пройдена, всё работает! 🎉 Значит, DoD этапов 1–5 закрыт полностью. Берусь за этап 6 — виджет на Glance. Сначала проверю CI этапа 5 (наблюдатель работал, пока ты тестировал) и версии Glance/WorkManager.
+
+  Read 1 file, ran 2 shell commands
+
+● Write(core\data\src\main\kotlin\io\github\vihrea1337\skycast\core\data\widget\WidgetUpdater.kt)
+Wrote 11 lines to core\data\src\main\kotlin\io\github\vihrea1337\skycast\core\data\widget\WidgetUpdater.kt
+package io.github.vihrea1337.skycast.core.data.widget
+
+/**
+ * Инверсия зависимости (docs/PLAN.md §5.13): data-слой уведомляет виджет
+ * об обновлении данныация — в модуле :widget.
+ */
+interface WidgetUpdater {
+
+    /** Перерисовать все экземпляры виджета из свежего кэша. */
+    suspend fun updateAll()
+… +1 line
+
+● Update(core\data\src\main\kotlin\io\github\vihrea1337\skycast\core\data\repository\DefaultWeatherRepository.kt)
+Added 1 line
+import io.github.vihrea1337.skycast.core.data.mapper.toDailyForecastEntiti
+es
+import io.github.vihrea1337.skycast.core.data.mapper.toHourlyForecastEntit
+ies
+import io.github.vihrea1337.skycast.core.data.mapper.toWeatherData
+import io.github.vihret.WidgetUpdater
+import io.github.vihrea1337.skycast.core.database.dao.LocationDao
+import io.github.vihrea1337.skycast.core.database.dao.WeatherDao
+import io.github.vihrea1337.skycast.core.model.WeatherData
+
+● Update(core\data\src\main\kotast\core\data\repository\DefaultWeatherRepository.kt)
+Added 1 line
+    private val weath
+    private val locationDao: LocationDao,
+    private val settingsRepository: SettingsRepository,
+    private val widge
+    private val clock: Clock,
+    @Dispatcher(DispatcherType.IO) private val ioDispatcher: CoroutineDisp
+atcher,
+) : WeatherRepository {
+
+● Update(core\data\src\main\kotlin\io\github\vihrea1337\skycast\core\data\repository\DefaultWeatherRepository.kt)
+Added 13 lines, removed 8 lines
+        )
+        when (respons
+            is AppResult.Failure -> response
+            is AppRes
+                val dto = response.data
+                weatherDao.replaceForecast(
+                    l
+                    current = dto.toCurrentWeatherEntity(location.id, sett
+ings, updatedAt = clock.instant()),
+                    hrecastEntities(location.
+id, currentTime = dto.current.time),
+                    dastEntities(location.id)
+,
+                )
+            is AppResult.Success -> {
+                val stored = storeSafely {
+                    val dto = response.data
+                    w
+                        locationId = location.id,
+                        current = dto.toCurrentWeatherEntity(location.id,
+settings, updatedAt =
+                        hourly = dto.hourly.toHourlyForecastEntities(locat
+ion.id, currentTime = dto.current.time),
+                     orecastEntities(location
+),
+                    )
+                }
+                // Виджет всегда синхронен приложению: обновляем после усп
+ешной записи
+                if (stored is AppResult.Success) widgetUpdater.updateAll()
+                stored
+            }
+        }
+    }
+
+● Update(gradle\libs.versions.toml)
+Added 3 lines
+room = "2.8.4"
+datastore = "1.2.1"
+playServicesLocation
+glance = "1.1.1"
+workManager = "2.11.2"
+androidxHiltWork = "1
+javaxInject = "1"
+detekt = "1.23.8"
+junit = "4.13.2"
+
+● Update(gradle\libs.versions.t
+Added 5 lines
+room-compiler = { group = "androidx.room", name = "room-compiler", version
+.ref = "room" }
+
+store-preferences", version.ref = "datastore" }
+androidx-glance-appwidget = { group = "androidx.glance", name = "glance-ap
+pwidget", version.ref = "glance" }
+androidx-glance-material3 = { group = "androidx.glance", name = "glance-ma
+terial3", version.ref = "glance" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtim
+e-ktx", version.ref = "workManager" }
+androidx-hilt-work = me = "hilt-work", versio
+n.ref = "androidxHiltWork" }
+androidx-hilt-compiler = { group = "androidx.hilt", name = "hilt-compiler"
+, version.ref = "andr
+y-services-location = { group = "com.google.android.gms", name = "play-
+services-location", version.ref = "playServicesLocation" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name
+ = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutines" }
+
+
+● Update(core\data\src\test\kotlin\io\github\vihrea1337\skycast\core\data\repository\Defaul
+        tWeatherRepositoryTest.
+Added 1 line
+
+    private val weatherDao = FakeWeatherDao()
+    private val locationDao = FakeLocationDao()
+    private val widgetUpdater = RecordingWidgetUpdater()
+
+    @Test
+    fun `refresh without selected location is a no-op success`() = runTest
+ {
+
+● Update(core\data\src\test\kotlin\io\github\vihrea1337\skycast\core\data\repository\Defaul
+        tWeatherRepositoryTest.
+Added 1 line
+        assertEquals(WeatherType.OVERCAST, weather.current.weatherType)
+        assertEquals(At)
+        assertEquals(TemperatureUnit.CELSIUS, weather.temperatureUnit)
+        assertEquals(
+    }
+
+    @Test
+
+● Update(core\data\src\test\kotlin\io\github\vihrea1337\skycast\core\data\repository\Defaul
+        tWeatherRepositoryTest.
+Added 2 lines
+        repository.refresh()
+
+        network.forecastResult = AppResult.Failure(AppError.Network)
+        widgetUpdater.updateCount = 0
+        val result = repository.refresh()
+
+
+        assertEquals(10.0, repository.observeWeather().first()!!.current.t
+emperature, 0.0)
+        assertEquals(0, widgetUpdater.updateCount) // виджет не трогаем пр
+и неудаче
+    }
+
+    @Test
+
+● Update(core\data\src\test\kotast\core\data\repository\DefaultWeatherRepositoryTest.kt)
+Added 8 lines
+        weatherDao = weatherDao,
+        locationDao = locationDao,
+        settingsRepository = FakeSettingsRepository(),
+        widgetUpdate
+        clock = fixedClock,
+        ioDispatchertScheduler),
+    )
+
+    private class ReUpdater {
+        var updateCount = 0
+        override sus
+            updateCount++
+        }
+    }
+
+    private class FakeSettingsRepository : SettingsRepository {
+        override val = MutableStateFlow(User
+Settings.Default)
+        override suspend fun setTemperatureUnit(unit: TemperatureUnit) =
+Unit
+
+● Update(core\data\src\test\kotast\core\data\repository\DefaultWeatherRepositoryTest.kt)
+Added 1 line
+import io.github.vihrsult.AppResult
+import io.github.vihrea1337.skycast.core.data.testdouble.FakeLocationDao
+import io.github.vihrea1337.skycast.core.data.testdouble.FakeWeatherDao
+import io.github.vihret.WidgetUpdater
+ort io.github.vihrea1337.skycast.core.model.TemperatureUnit
+import io.github.vihrea1337.skycast.core.model.ThemeMode
+
+● Write(widget\build.gradle.kts)
+Wrote 56 lines to widget\build.gradle.kts
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
+// Виджет домашнего экocs/PLAN.md §5.13)
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins
+    alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.detekt)
+… +47 lines
+
+● Write(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WeatherWidget.kt)
+Wrote 46 lines to
+widget\src\main\kotlin\io\get\WeatherWidget.kt
+package io.github.vihrea1337.skycast.widget
+
+import android.content
+rt androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
+import androidx.glance.GlanceId
+import androidx.glance.GlanceTheme
+import androidx.glance.appwidget.GlanceAppWidget
+import androidx.glance.appwidget.SizeMode
+import androidx.glance.appwidget.provideContent
+… +38 lines
+
+● Write(widget\src\main\kotlin\widget\WeatherWidgetReceiver.kt)
+Wrote 22 lines to widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WeatherWidgetReceiver.kt
+ackage io.github.vihrea1337.skycast.widget
+
+mport android.content.
+mport androidx.glance.appwidget.GlanceAppWidget
+mport androidx.glance.appwidget.GlanceAppWidgetReceiver
+
+lass WeatherWidgetReceiver : GlanceAppWidgetReceiver() {
+
+   override val glanceAppWidget: GlanceAppWidget = WeatherWidget()
+… +13 lines
+t\src\main\kotlin\io\github\vihrea1337\skycast\widget\WidgetSync.kt)
+Wrote 36 lines to widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WidgetSync.kt
+ackage io.github.vihrea1337.skycast.widget
+
+mport android.content.Context
+mport androidx.work.Constraints
+mport androidx.work.Ex
+mport androidx.work.NetworkType
+mport androidx.work.Pe
+mport androidx.work.WorkManager
+mport java.util.concurrent.TimeUnit
+… +28 lines
+
+● Write(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WeatherWidgetWorker.kt)
+Wrote 37 lines towidget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WeatherWidgetWorker.kt
+package io.github.vihrea1337.skycast.widget
+
+import android.content.Context
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import dagger.assisted
+nes
+
+● Write(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\di\WidgetModule.kt)
+Wrote 29 lines to widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\di\WidgetModule.kt
+package io.github.vihrea1337.skycast.widget.di
+
+import android.content
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+import dagger.hilt.andntext
+rt io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater
+import io.github.vihrea1337.skycast.widget.WeatherWidget
+… +19 lines
+
+● Update(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\WeatherWidgetWorker.kt)
+Added 1 line
+package io.github.vihrea1337.skycast.widget
+
+import android.content.Context
+import androidx.glance
+import androidx.hilt.work.HiltWorker
+import androidx.work.CoroutineWorker
+import androidx.work.WorkerParameters
+
+● Update(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\di\WidgetModule.kt)
+Added 1 line
+package io.github.vihrea1337.skycast.widget.di
+
+import android.content.Context
+import androidx.glance.appwidget.updateAll
+import dagger.Binds
+import dagger.Module
+import dagger.hilt.InstallIn
+
+● Write(widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\ui\WidgetContent.kt)
+Wrote 156 lines to widget\src\main\kotlin\io\github\vihrea1337\skycast\widget\ui\WidgetContent.kt
+package io.github.vihrea1337.skycast.widget.ui
+
+import android.content
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.sp
+import androidx.glance
+import androidx.glance.GlanceTheme
+import androidx.glance.Image
+import androidx.glance.ImageProvider
+import androidx.glance
+ lines, removed 16 lines
+
+import android.content.ComponentName
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.glance.ColorFilter
+import androidx.glanc
+import androidx.glance.GlanceTheme
+import androidx.glance.Image
+
+ort androidx.glance.appwidget.cornerRadius
+import androidx.glance.background
+import androidx.glance.color.ColorProvider
+import androidx.glance.layout.Alignment
+import androidx.glance.layout.Box
+import androidx.glance.layout.Column
+
+            .fillMaxS
+            .appWidgetBackground()
+            .backgrouackground)
+            .cornerRadius(16.dpValue())
+            .cornerRadius(16.dp)
+            .clickable(actionStartActivity(ComponentName(context.packageNa
+me, MAIN_ACTIVITY)))
+            .padding(12.dpValue()),
+            .padding(
+        contentAlignment = Alignment.Center,
+    ) {
+        when {
+
+@Composable
+private fun SmallCont
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        WeatherImage(type = weather.current.weatherType, isDay = weather.c
+urrent.isDay, sizeDp = 32)
+        Spacer(Glance
+         Text(
+                text = "${weather.current.temperature.roundToInt()}°",
+
+            maxLines = 1,
+        )
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            WeatherImage(type = weather.current.weatherType, isDay = weat
+her.current.isDay, s
+            Spacer(GlanceModifier.width(12.dpValue()))
+            WeatherImage(type = weather.current.weatherType, isDay = weat
+her.current.isDay, size = 44.dp)
+            Spacer(G
+              text = "${weather.current.temperature.roundToInt()}°",
+                style = TextStyle(
+
+                    fontWeight = FontWeight.Bold,
+                ),
+            )
+            Spacer(GlanceModifier.width(12.dpValue()))
+            Spacer(G
+            Column {
+                Text(
+                    her.current.weatherType.
+labelRes()),
+
+}
+
+@Composable
+private fun WeatherI: Boolean, sizeDp: Int)
+{
+private fun WeatherImage(type: WeatherType, isDay: Boolean, size: android
+x.compose.ui.unit.Dp
+    Image(
+        provider = ImageProvider(type.drawableRes(isDay)),
+        contentDescription = null, // смысл передаёт текст рядом
+        modifier = GlanceModifier.size(sizeDp.dpValue()),
+        colorFilter .tint(GlanceTheme.colors
+
+    WeatherType.SNOW, WeatherType.SNOW_SHOWERS -> R.drawable.ic_weather_s
+now
+    WeatherType.THUNDERSTORM -> R.drawable.ic_weather_thunder
+}
+
+private fun Int.dpValue() = androidx.compose.ui.unit.Dp(this.toFloat())
+
+@Suppress("UnusedPri
+private val unusedColorProviderKeepImport: ColorProvider? = null
+
+● Write(widget\src\main\res\drawable\ic_weather_clear.xml)
+Wrote 13 lines to widget\ser_clear.xml
+    android:fillColor="@android:color/white"
+        android:pathData="M12,7a5,5 0 1,0 0.01,10a5,5 0 1,0 -0.01,-10z" />
+    <path
+        android:strokeColor="@android:color/white"
+        android:strokeWidth="2"
+… +4 lines
+
+● Write(widget\src\main\res\dra
+Wrote 8 lines to widget\src\main\res\drawable\ic_weather_night.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp
+path
+        android:fillColor="@android:color/white"
+        android:pathData="M14.5,3A9,9 0 1,0 21,15.5A7.5,7.5 0 0,1 14.5,3z" /
+>
+</vector>
+
+● Write(widget\src\main\res\drawable\ic_weather_clouds.xml)
+Wrote 8 lines to widget\srr_clouds.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="k/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:fillColor="@android:color/white"
+        android:pathData="M19.35,10.04C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.
+64 5.35,8.04C2.34,8.36 6h13c2.76,0 5,-2.24 5,-5
+C24,12.36 21.95,10.22 19.35,10.04z" />
+</vector>
+
+● Write(widget\src\main\res\dra
+Wrote 18 lines to widget\src\main\res\drawable\ic_weather_rain.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24d
+   <path
+            android:fillColor="@android:color/white"
+… +10 lines
+
+● Write(widget\src\main\res\drawable\ic_weather_snow.xml)
+Wrote 16 lines to widget\src\main\res\drawable\ic_weather_snow.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android=pk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <group
+        android:scaleX
+   <path
+            android:fillColor="@android:color/white"
+… +10 lines
+
+● Write(widget\src\main\res\drawable\ic_weather_thunder.xml)
+Wrote 16 lines to widget\src\main\res\drawable\ic_weather_thunder.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android=pk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <group
+        android:scaleX="0.85"
+        android:scaleY="0.85"
+        android:translateX="1.8">
+        <path
+            android:fillColor="@android:color/white"
+… +9 lines
+
+● Write(widget\src\main\res\drawable\ic_weather_fog.xml)
+Wrote 10 lines to widget\ser_fog.xml
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24d
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path
+        android:strokeColor="@android:color/white"
+        android:stroke
+\main\AndroidManifest.xml)
+Wrote 18 lines to widget\src\main\AndroidManifest.xml
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <receiver
+            android:exported="false"
+            android:label="@string/widget_label">
+            <intent-filter>
+                <actiodget.action.APPWIDGET_UP
+
+● Write(widget\src\main\res\xml\weather_widget_info.xml)
+Wrote 14 lines to widget\src\main\res\xml\weather_widget_info.xml
+<?xml version="1.0" encoding="utf-8"?>
+<!-- updatePeriodMillis=0: обновляет только WorkManager (минимум системы —
+30 мин и неточно) -->
+id"
+    android:minWidth="110dp"
+    android:minHeight="50dp"
+    android:targetCell
+    android:targetCellHeight="1"
+    android:maxResizeHeight="160dp"
+    android:resizeMode="horizontal|vertical"
+… +5 lines
+
+● Write(widget\src\main\res\val
+Wrote 5 lines to widget\src\main\res\values\strings.xml
+<resources>
+    <string name="widgeing>
+    <string name="widget_description">Current weather and today\'s range for
+ your city</string>
+    <string name="widget_no_data">Open the app to load weather</string>
+</resources>
+
+● Write(widget\src\main\res\val
+ removed 1 line
+package io.github.vihrea1337.skycast
+
+import android.app.Application
+import androidx.hilt.work.HiltWorkerFactory
+import androidx.work.Configuration
+import dagger.hilt.an
+import javax.inject.Inject
+
+/**
+ * Configuration.ProvltWorker-воркеры через H
+astApplication : Application(), Configuration.Provider {
+
+    @Inject
+    lateinit var workerFactory: HiltWorkerFactory
+
+    override val workManagerConfiguration: Configuration
+        get() = Confi
+            .setWorkerFactory(workerFactory)
+            .build()
+}
+
+mlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Точная геолокация не нужна: для погоды достаточно города (docs/PLA
+N.md §5.1) -->
+
+● Update(app\src\main\AndroidManifest.xml)
+Added 12 lines
+                <catetent.category.LAUNCHER"
+/>
+            </intent-filter>
+        </activity>
+
+        <!-- WorkManager инициализируется через Configuration.Provider (Hi
+ltWorkerFactory),
+             дефолтный инициализатор обязан быть выключен -->
+        <provider
+            android:nizationProvider"
+            android:aandroidx-startup"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                andro
+
+● Update(app\build.gradle.kts)
+Added 1 line
+    implementation(project(":feature:home"))
+    implementation(project(":feature:search"))
+    implementation(project(":feature:settings"))
+    implementation(pr
+    implementation(project(":core:designsystem"))
+    implementation(project(":core:domain"))
+
+
+ion(libs.androidx.hilt.work)
+    implementation(libs.androidx.work.runtime.ktx)
+
+    testImplementation(libs.junit)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+
+● Update(settings.gradle.kts)
+Added 1 line
+include(":feature:home")
+include(":feature:search")
+include(":feature:settings")
+include(":widget")
+You've hit your session liow)
+/upgrade to increase your usage limit.

@@ -4,6 +4,7 @@ import io.github.vihrea1337.skycast.core.common.result.AppError
 import io.github.vihrea1337.skycast.core.common.result.AppResult
 import io.github.vihrea1337.skycast.core.data.testdouble.FakeLocationDao
 import io.github.vihrea1337.skycast.core.data.testdouble.FakeWeatherDao
+import io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater
 import io.github.vihrea1337.skycast.core.database.entity.LocationEntity
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.ThemeMode
@@ -36,6 +37,7 @@ class DefaultWeatherRepositoryTest {
 
     private val weatherDao = FakeWeatherDao()
     private val locationDao = FakeLocationDao()
+    private val widgetUpdater = RecordingWidgetUpdater()
 
     @Test
     fun `refresh without selected location is a no-op success`() = runTest {
@@ -62,6 +64,7 @@ class DefaultWeatherRepositoryTest {
         assertEquals(WeatherType.OVERCAST, weather.current.weatherType)
         assertEquals(fixedInstant, weather.updatedAt)
         assertEquals(TemperatureUnit.CELSIUS, weather.temperatureUnit)
+        assertEquals(1, widgetUpdater.updateCount)
     }
 
     @Test
@@ -72,10 +75,12 @@ class DefaultWeatherRepositoryTest {
         repository.refresh()
 
         network.forecastResult = AppResult.Failure(AppError.Network)
+        widgetUpdater.updateCount = 0
         val result = repository.refresh()
 
         assertEquals(AppError.Network, (result as AppResult.Failure).error)
         assertEquals(10.0, repository.observeWeather().first()!!.current.temperature, 0.0)
+        assertEquals(0, widgetUpdater.updateCount) // виджет не трогаем при неудаче
     }
 
     @Test
@@ -125,9 +130,17 @@ class DefaultWeatherRepositoryTest {
         weatherDao = weatherDao,
         locationDao = locationDao,
         settingsRepository = FakeSettingsRepository(),
+        widgetUpdater = widgetUpdater,
         clock = fixedClock,
         ioDispatcher = StandardTestDispatcher(testScheduler),
     )
+
+    private class RecordingWidgetUpdater : WidgetUpdater {
+        var updateCount = 0
+        override suspend fun updateAll() {
+            updateCount++
+        }
+    }
 
     private class FakeSettingsRepository : SettingsRepository {
         override val settings: Flow<UserSettings> = MutableStateFlow(UserSettings.Default)

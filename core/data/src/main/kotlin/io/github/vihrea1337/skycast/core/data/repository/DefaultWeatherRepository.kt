@@ -8,6 +8,7 @@ import io.github.vihrea1337.skycast.core.data.mapper.toCurrentWeatherEntity
 import io.github.vihrea1337.skycast.core.data.mapper.toDailyForecastEntities
 import io.github.vihrea1337.skycast.core.data.mapper.toHourlyForecastEntities
 import io.github.vihrea1337.skycast.core.data.mapper.toWeatherData
+import io.github.vihrea1337.skycast.core.data.widget.WidgetUpdater
 import io.github.vihrea1337.skycast.core.database.dao.LocationDao
 import io.github.vihrea1337.skycast.core.database.dao.WeatherDao
 import io.github.vihrea1337.skycast.core.model.WeatherData
@@ -29,6 +30,7 @@ internal class DefaultWeatherRepository @Inject constructor(
     private val weatherDao: WeatherDao,
     private val locationDao: LocationDao,
     private val settingsRepository: SettingsRepository,
+    private val widgetUpdater: WidgetUpdater,
     private val clock: Clock,
     @Dispatcher(DispatcherType.IO) private val ioDispatcher: CoroutineDispatcher,
 ) : WeatherRepository {
@@ -69,14 +71,19 @@ internal class DefaultWeatherRepository @Inject constructor(
         )
         when (response) {
             is AppResult.Failure -> response
-            is AppResult.Success -> storeSafely {
-                val dto = response.data
-                weatherDao.replaceForecast(
-                    locationId = location.id,
-                    current = dto.toCurrentWeatherEntity(location.id, settings, updatedAt = clock.instant()),
-                    hourly = dto.hourly.toHourlyForecastEntities(location.id, currentTime = dto.current.time),
-                    daily = dto.daily.toDailyForecastEntities(location.id),
-                )
+            is AppResult.Success -> {
+                val stored = storeSafely {
+                    val dto = response.data
+                    weatherDao.replaceForecast(
+                        locationId = location.id,
+                        current = dto.toCurrentWeatherEntity(location.id, settings, updatedAt = clock.instant()),
+                        hourly = dto.hourly.toHourlyForecastEntities(location.id, currentTime = dto.current.time),
+                        daily = dto.daily.toDailyForecastEntities(location.id),
+                    )
+                }
+                // Виджет всегда синхронен приложению: обновляем после успешной записи
+                if (stored is AppResult.Success) widgetUpdater.updateAll()
+                stored
             }
         }
     }

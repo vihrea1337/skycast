@@ -1,0 +1,5 @@
+<resources>
+    <string name="widget_label">SkyCast weather</string>
+    <string name="widget_description">Current weather and today\'s range for your city</string>
+    <string name="widget_no_data">Open the app to load weather</string>
+</resources>

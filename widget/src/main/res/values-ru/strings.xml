@@ -1,0 +1,5 @@
+<resources>
+    <string name="widget_label">Погода SkyCast</string>
+    <string name="widget_description">Текущая погода и вилка на сегодня для твоего города</string>
+    <string name="widget_no_data">Открой приложение, чтобы загрузить погоду</string>
+</resources>
