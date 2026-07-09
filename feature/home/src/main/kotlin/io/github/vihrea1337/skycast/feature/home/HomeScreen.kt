@@ -27,7 +27,9 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -52,6 +54,7 @@ import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import io.github.vihrea1337.skycast.feature.home.components.DailyForecastList
 import io.github.vihrea1337.skycast.feature.home.components.HomeSkeleton
 import io.github.vihrea1337.skycast.feature.home.components.HourlyForecastRow
+import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
 import kotlin.math.roundToInt
@@ -241,7 +244,15 @@ private fun WindSpeedUnit.valueRes(): Int = when (this) {
 
 @Composable
 private fun updatedAgoText(updatedAt: Instant): String {
-    val minutes = Duration.between(updatedAt, Instant.now()).toMinutes()
+    // Метка «живая»: тикает раз в минуту, а не замирает до следующей рекомпозиции
+    var now by remember { mutableStateOf(Instant.now()) }
+    LaunchedEffect(updatedAt) {
+        while (true) {
+            delay(TICK_MS)
+            now = Instant.now()
+        }
+    }
+    val minutes = Duration.between(updatedAt, now).toMinutes()
     return when {
         minutes < 1 -> stringResource(R.string.feature_home_updated_just_now)
         minutes < MINUTES_IN_HOUR -> stringResource(R.string.feature_home_updated_minutes_ago, minutes)
@@ -250,6 +261,7 @@ private fun updatedAgoText(updatedAt: Instant): String {
 }
 
 private const val MINUTES_IN_HOUR = 60L
+private const val TICK_MS = 60_000L
 
 @Composable
 private fun AppError.toMessage(): String = when (this) {

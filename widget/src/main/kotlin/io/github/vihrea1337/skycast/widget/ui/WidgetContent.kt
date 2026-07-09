@@ -28,6 +28,7 @@ import androidx.glance.layout.width
 import androidx.glance.text.FontWeight
 import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
+import io.github.vihrea1337.skycast.core.designsystem.component.drawableRes
 import io.github.vihrea1337.skycast.core.designsystem.component.labelRes
 import io.github.vihrea1337.skycast.core.model.WeatherData
 import io.github.vihrea1337.skycast.core.model.WeatherType
@@ -135,18 +136,10 @@ private fun MediumContent(weather: WeatherData) {
 @Composable
 private fun WeatherImage(type: WeatherType, isDay: Boolean, size: androidx.compose.ui.unit.Dp) {
     Image(
+        // Тот же векторный набор и маппинг, что в приложении (designsystem)
         provider = ImageProvider(type.drawableRes(isDay)),
         contentDescription = null, // смысл передаёт текст рядом
         modifier = GlanceModifier.size(size),
         colorFilter = ColorFilter.tint(GlanceTheme.colors.onSurface),
     )
-}
-
-private fun WeatherType.drawableRes(isDay: Boolean): Int = when (this) {
-    WeatherType.CLEAR -> if (isDay) R.drawable.ic_weather_clear else R.drawable.ic_weather_night
-    WeatherType.PARTLY_CLOUDY, WeatherType.OVERCAST -> R.drawable.ic_weather_clouds
-    WeatherType.FOG -> R.drawable.ic_weather_fog
-    WeatherType.DRIZZLE, WeatherType.RAIN, WeatherType.RAIN_SHOWERS -> R.drawable.ic_weather_rain
-    WeatherType.SNOW, WeatherType.SNOW_SHOWERS -> R.drawable.ic_weather_snow
-    WeatherType.THUNDERSTORM -> R.drawable.ic_weather_thunder
 }

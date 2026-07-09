@@ -48,8 +48,5 @@ dependencies {
     api(libs.androidx.compose.ui.tooling.preview)
     debugApi(libs.androidx.compose.ui.tooling)
 
-    // Не api: иконки — деталь реализации WeatherIcon; R8 вырежет неиспользуемые
-    implementation(libs.androidx.compose.material.icons.extended)
-
     detektPlugins(libs.detekt.formatting)
 }

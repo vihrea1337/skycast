@@ -1,0 +1,17 @@
+# Автообновление зависимостей: PR раз в неделю, CI проверяет каждое обновление
+version: 2
+updates:
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    groups:
+      # Мелкие обновления пачкой — меньше шума
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

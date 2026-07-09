@@ -1,27 +1,18 @@
 package io.github.vihrea1337.skycast.core.designsystem.component
 
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.AcUnit
-import androidx.compose.material.icons.outlined.Bolt
-import androidx.compose.material.icons.outlined.Cloud
-import androidx.compose.material.icons.outlined.Dehaze
-import androidx.compose.material.icons.outlined.Grain
-import androidx.compose.material.icons.outlined.NightsStay
-import androidx.compose.material.icons.outlined.WaterDrop
-import androidx.compose.material.icons.outlined.WbCloudy
-import androidx.compose.material.icons.outlined.WbSunny
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import io.github.vihrea1337.skycast.core.designsystem.R
 import io.github.vihrea1337.skycast.core.model.WeatherType
 
 /**
- * Единая точка «тип погоды → иконка». Пока это Material-иконки;
- * на этапе полировки заменятся на полноценный погодный набор — только здесь.
+ * Единая точка «тип погоды → иконка»: собственный векторный набор,
+ * один и тот же в приложении и в виджете.
  */
 @Composable
 fun WeatherIcon(
@@ -30,21 +21,22 @@ fun WeatherIcon(
     modifier: Modifier = Modifier,
 ) {
     Icon(
-        imageVector = type.icon(isDay),
+        painter = painterResource(type.drawableRes(isDay)),
         contentDescription = stringResource(type.labelRes()),
         modifier = modifier,
     )
 }
 
-private fun WeatherType.icon(isDay: Boolean): ImageVector = when (this) {
-    WeatherType.CLEAR -> if (isDay) Icons.Outlined.WbSunny else Icons.Outlined.NightsStay
-    WeatherType.PARTLY_CLOUDY -> Icons.Outlined.WbCloudy
-    WeatherType.OVERCAST -> Icons.Outlined.Cloud
-    WeatherType.FOG -> Icons.Outlined.Dehaze
-    WeatherType.DRIZZLE -> Icons.Outlined.Grain
-    WeatherType.RAIN, WeatherType.RAIN_SHOWERS -> Icons.Outlined.WaterDrop
-    WeatherType.SNOW, WeatherType.SNOW_SHOWERS -> Icons.Outlined.AcUnit
-    WeatherType.THUNDERSTORM -> Icons.Outlined.Bolt
+/** Публичный маппинг: виджет использует его же через ImageProvider. */
+@DrawableRes
+fun WeatherType.drawableRes(isDay: Boolean): Int = when (this) {
+    WeatherType.CLEAR -> if (isDay) R.drawable.ic_weather_clear else R.drawable.ic_weather_night
+    WeatherType.PARTLY_CLOUDY -> if (isDay) R.drawable.ic_weather_partly else R.drawable.ic_weather_clouds
+    WeatherType.OVERCAST -> R.drawable.ic_weather_clouds
+    WeatherType.FOG -> R.drawable.ic_weather_fog
+    WeatherType.DRIZZLE, WeatherType.RAIN, WeatherType.RAIN_SHOWERS -> R.drawable.ic_weather_rain
+    WeatherType.SNOW, WeatherType.SNOW_SHOWERS -> R.drawable.ic_weather_snow
+    WeatherType.THUNDERSTORM -> R.drawable.ic_weather_thunder
 }
 
 @StringRes
