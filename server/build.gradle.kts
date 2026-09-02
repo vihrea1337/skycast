@@ -26,6 +26,11 @@ kotlin {
 // FAIL_ON_PROJECT_REPOS) — google() + mavenCentral() уже хватает для всех зависимостей ниже.
 
 dependencies {
+    // Контракт ответа Open-Meteo — тот же класс, что использует Android-приложение
+    // (core:network). Чисто-JVM модуль, без Android-зависимостей — можно подключать
+    // напрямую. См. docs/03-api-swagger.md.
+    implementation(project(":core:openmeteo"))
+
     // --- Сервер: принимает запрос от клиента SkyCast (или curl/Swagger UI) ---
     implementation("io.ktor:ktor-server-core")
     implementation("io.ktor:ktor-server-netty")
@@ -33,6 +38,9 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json")
     // Единая обработка ошибок → аккуратные JSON вместо стектрейса на неверных координатах.
     implementation("io.ktor:ktor-server-status-pages")
+    // Наивный per-IP rate limit — публичный эндпоинт проксирует Open-Meteo, один клиент
+    // не должен иметь возможность вычерпать общую квоту сервиса на всех.
+    implementation("io.ktor:ktor-server-rate-limit")
     // Swagger UI на /swagger, читает статический OpenAPI-файл из resources/openapi/.
     implementation("io.ktor:ktor-server-swagger")
     implementation("ch.qos.logback:logback-classic:1.5.12")

@@ -1,5 +1,6 @@
 package io.github.vihrea1337.skycast.server
 
+import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import java.time.Clock
 import java.time.Instant
 
@@ -31,7 +32,7 @@ class WeatherService(
         return aggregated
     }
 
-    private fun aggregate(latitude: Double, longitude: Double, raw: OpenMeteoForecastDto): AggregatedWeatherResponse {
+    private fun aggregate(latitude: Double, longitude: Double, raw: ForecastResponseDto): AggregatedWeatherResponse {
         val hourly = raw.hourly.time.indices.map { i ->
             HourlyWeather(
                 time = raw.hourly.time[i],

@@ -1,5 +1,6 @@
 package io.github.vihrea1337.skycast.server
 
+import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
@@ -15,7 +16,7 @@ class OpenMeteoClient(
     private val httpClient: HttpClient,
     private val baseUrl: String = "https://api.open-meteo.com",
 ) {
-    suspend fun getForecast(latitude: Double, longitude: Double): OpenMeteoForecastDto =
+    suspend fun getForecast(latitude: Double, longitude: Double): ForecastResponseDto =
         httpClient.get("$baseUrl/v1/forecast") {
             parameter("latitude", latitude)
             parameter("longitude", longitude)
