@@ -8,7 +8,7 @@ Gradle-проекта SkyCast (Android-плагины его не касаютс
 
 Open-Meteo отдаёт `hourly`/`daily` как параллельные массивы: `time[i]`, `temperature_2m[i]`,
 ... относятся к одному моменту `i` — клиенту приходится сшивать их руками (см.
-`core/network/dto/ForecastResponseDto.kt`). Этот сервер делает ту же сшивку один раз на
+`core/openmeteo/src/main/kotlin/.../ForecastResponseDto.kt`). Этот сервер делает ту же сшивку один раз на
 сервере: `GET /api/v1/weather?lat=&lon=` отдаёт `hourly`/`daily` как список готовых
 объектов, плюс кэширует ответ на 10 минут (по координатам, округлённым до 0.01° ≈ 1 км),
 чтобы не дёргать Open-Meteo на каждый чих.
@@ -77,7 +77,7 @@ Open-Meteo повторно.
 
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-21.0.12.101-hotspot"
-.\gradlew.bat ":server:test"          # 5 юнит-тестов, HTTP замокан (MockEngine) — сети не требуют
+.\gradlew.bat ":server:test"          # 7 тестов (см. раздел «Тесты» ниже), сети не требуют
 .\gradlew.bat ":server:buildFatJar"   # -> server/build/libs/server-all.jar
 ```
 

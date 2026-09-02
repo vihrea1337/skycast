@@ -29,16 +29,17 @@ import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
-/**
- * Мини-бэкенд SkyCast: агрегирует Open-Meteo в один аккуратный JSON и документирует
- * себя через Swagger UI на /swagger. Отдельный от Android-приложения проект — общий
- * только контракт данных (те же поля, что и в мобильном клиенте, см. OpenMeteoDto.kt).
- */
 private const val DEFAULT_PORT = 8090
 private const val REQUEST_TIMEOUT_MILLIS = 12_000L
 private const val CONNECT_TIMEOUT_MILLIS = 6_000L
 private const val RATE_LIMIT_REQUESTS = 20
 
+/**
+ * Мини-бэкенд SkyCast: агрегирует Open-Meteo в один аккуратный JSON и документирует
+ * себя через Swagger UI на /swagger. Отдельный от Android-приложения проект — общий
+ * только контракт данных Open-Meteo (`core:openmeteo` — `ForecastResponseDto` и соседи),
+ * которым пользуется и мобильный клиент.
+ */
 fun main() {
     val port = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT
     val host = System.getenv("HOST") ?: "0.0.0.0"
