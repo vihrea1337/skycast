@@ -35,3 +35,6 @@ include(":feature:home")
 include(":feature:search")
 include(":feature:settings")
 include(":widget")
+// Мини-бэкенд на Ktor (Этап 9, опционально) — агрегатор Open-Meteo со Swagger UI.
+// Обычный JVM-модуль, Android-плагины не трогает. Подробности — docs/03-api-swagger.md.
+include(":server")
