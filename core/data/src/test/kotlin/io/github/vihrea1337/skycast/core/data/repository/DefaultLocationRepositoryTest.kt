@@ -8,8 +8,8 @@ import io.github.vihrea1337.skycast.core.model.Location
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import io.github.vihrea1337.skycast.core.network.NetworkDataSource
-import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import io.github.vihrea1337.skycast.core.network.dto.PlaceDto
+import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope

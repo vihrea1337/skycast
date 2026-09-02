@@ -12,11 +12,11 @@ import io.github.vihrea1337.skycast.core.model.UserSettings
 import io.github.vihrea1337.skycast.core.model.WeatherType
 import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import io.github.vihrea1337.skycast.core.network.NetworkDataSource
+import io.github.vihrea1337.skycast.core.network.dto.PlaceDto
 import io.github.vihrea1337.skycast.core.openmeteo.CurrentDto
 import io.github.vihrea1337.skycast.core.openmeteo.DailyDto
 import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import io.github.vihrea1337.skycast.core.openmeteo.HourlyDto
-import io.github.vihrea1337.skycast.core.network.dto.PlaceDto
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
