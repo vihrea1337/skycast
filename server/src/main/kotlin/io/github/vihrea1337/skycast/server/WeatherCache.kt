@@ -12,7 +12,7 @@ import java.util.concurrent.ConcurrentHashMap
  * карты) попадали в одну запись вместо отдельного похода в Open-Meteo на каждую.
  */
 class WeatherCache(
-    private val ttl: Duration = Duration.ofMinutes(10),
+    private val ttl: Duration = Duration.ofMinutes(CACHE_TTL_MINUTES),
     private val clock: Clock = Clock.systemUTC(),
 ) {
     private data class Entry(val value: AggregatedWeatherResponse, val expiresAt: Instant)
@@ -21,8 +21,7 @@ class WeatherCache(
 
     fun get(latitude: Double, longitude: Double): AggregatedWeatherResponse? {
         val entry = entries[key(latitude, longitude)] ?: return null
-        if (Instant.now(clock).isAfter(entry.expiresAt)) return null
-        return entry.value
+        return entry.value.takeIf { Instant.now(clock).isBefore(entry.expiresAt) }
     }
 
     fun put(latitude: Double, longitude: Double, value: AggregatedWeatherResponse) {
@@ -30,7 +29,14 @@ class WeatherCache(
     }
 
     private fun key(latitude: Double, longitude: Double): String {
-        val rounded = { v: Double -> Math.round(v * 100) / 100.0 }
+        val rounded = { v: Double -> Math.round(v * COORDINATE_ROUNDING_FACTOR) / COORDINATE_ROUNDING_FACTOR }
         return "${rounded(latitude)},${rounded(longitude)}"
+    }
+
+    private companion object {
+        const val CACHE_TTL_MINUTES = 10L
+
+        // Округление до 0.01° (~1 км) — см. комментарий к классу.
+        const val COORDINATE_ROUNDING_FACTOR = 100.0
     }
 }

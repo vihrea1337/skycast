@@ -71,7 +71,11 @@ class WeatherServiceTest {
 
         assertEquals("2026-09-02T15:00", result.hourly[1].time)
         assertEquals(20.9, result.hourly[1].temperatureC)
-        assertEquals(null, result.hourly[1].precipitationProbabilityPercent, "null в исходном массиве должен остаться null")
+        assertEquals(
+            null,
+            result.hourly[1].precipitationProbabilityPercent,
+            "null в исходном массиве должен остаться null",
+        )
         assertFalse(result.hourly[1].isDay)
 
         assertEquals("2026-09-03", result.daily[1].date)

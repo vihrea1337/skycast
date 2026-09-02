@@ -4,7 +4,8 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
+import io.ktor.http.ContentType
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
@@ -23,19 +24,23 @@ import io.ktor.server.response.respond
 import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
-import io.ktor.http.ContentType
-import io.ktor.http.HttpStatusCode
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import kotlin.time.Duration.Companion.seconds
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation as ClientContentNegotiation
 
 /**
  * Мини-бэкенд SkyCast: агрегирует Open-Meteo в один аккуратный JSON и документирует
  * себя через Swagger UI на /swagger. Отдельный от Android-приложения проект — общий
  * только контракт данных (те же поля, что и в мобильном клиенте, см. OpenMeteoDto.kt).
  */
+private const val DEFAULT_PORT = 8090
+private const val REQUEST_TIMEOUT_MILLIS = 12_000L
+private const val CONNECT_TIMEOUT_MILLIS = 6_000L
+private const val RATE_LIMIT_REQUESTS = 20
+
 fun main() {
-    val port = System.getenv("PORT")?.toIntOrNull() ?: 8090
+    val port = System.getenv("PORT")?.toIntOrNull() ?: DEFAULT_PORT
     val host = System.getenv("HOST") ?: "0.0.0.0"
     embeddedServer(Netty, port = port, host = host, module = Application::module).start(wait = true)
 }
@@ -49,8 +54,8 @@ fun Application.module() {
         // клиента без всякой границы — проверено на практике: в контейнере
         // холодное DNS-разрешение иногда занимает несколько секунд.
         install(HttpTimeout) {
-            requestTimeoutMillis = 12_000
-            connectTimeoutMillis = 6_000
+            requestTimeoutMillis = REQUEST_TIMEOUT_MILLIS
+            connectTimeoutMillis = CONNECT_TIMEOUT_MILLIS
         }
     }
     // Закрываем HTTP-клиент при остановке сервера — иначе поток CIO-движка утекает
@@ -79,7 +84,10 @@ fun Application.configure(weatherService: WeatherService) {
         // Open-Meteo не ответил вовремя (см. HttpTimeout у клиента ниже) — 503, а не
         // зависший запрос без ответа: у клиента SkyCast/curl всегда будет чёткая граница.
         exception<HttpRequestTimeoutException> { call, _ ->
-            call.respond(HttpStatusCode.ServiceUnavailable, ErrorResponse("Open-Meteo не ответил вовремя, попробуйте ещё раз"))
+            call.respond(
+                HttpStatusCode.ServiceUnavailable,
+                ErrorResponse("Open-Meteo не ответил вовремя, попробуйте ещё раз"),
+            )
         }
     }
     // Наивный per-IP лимит: мы сами ходим в Open-Meteo от имени клиента, и у Open-Meteo
@@ -87,7 +95,7 @@ fun Application.configure(weatherService: WeatherService) {
     // вычерпать её для всех остальных. Ключ по умолчанию — IP отправителя запроса.
     install(RateLimit) {
         register(RateLimitName("weather")) {
-            rateLimiter(limit = 20, refillPeriod = 60.seconds)
+            rateLimiter(limit = RATE_LIMIT_REQUESTS, refillPeriod = 60.seconds)
             // Без явного requestKey все запросы делят один и тот же бакет на весь
             // процесс — нужен именно per-IP лимит, поэтому ключ задаём сами.
             // ВАЖНО: remoteAddress, не remoteHost! remoteHost — это

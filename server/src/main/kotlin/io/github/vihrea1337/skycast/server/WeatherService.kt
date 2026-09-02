@@ -17,11 +17,11 @@ class WeatherService(
     private val clock: Clock = Clock.systemUTC(),
 ) {
     suspend fun getWeather(latitude: Double, longitude: Double): AggregatedWeatherResponse {
-        if (latitude !in -90.0..90.0) {
-            throw InvalidCoordinatesException("latitude вне диапазона [-90, 90]: $latitude")
+        if (latitude !in MIN_LATITUDE..MAX_LATITUDE) {
+            throw InvalidCoordinatesException("latitude вне диапазона [$MIN_LATITUDE, $MAX_LATITUDE]: $latitude")
         }
-        if (longitude !in -180.0..180.0) {
-            throw InvalidCoordinatesException("longitude вне диапазона [-180, 180]: $longitude")
+        if (longitude !in MIN_LONGITUDE..MAX_LONGITUDE) {
+            throw InvalidCoordinatesException("longitude вне диапазона [$MIN_LONGITUDE, $MAX_LONGITUDE]: $longitude")
         }
 
         cache.get(latitude, longitude)?.let { return it.copy(cached = true) }
@@ -70,5 +70,12 @@ class WeatherService(
             generatedAt = Instant.now(clock).toString(),
             cached = false,
         )
+    }
+
+    private companion object {
+        const val MIN_LATITUDE = -90.0
+        const val MAX_LATITUDE = 90.0
+        const val MIN_LONGITUDE = -180.0
+        const val MAX_LONGITUDE = 180.0
     }
 }

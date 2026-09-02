@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     // Плагин Ktor — удобный запуск и сборка "толстого" JAR (один файл для Docker-образа).
     id("io.ktor.plugin") version "3.0.3"
+    alias(libs.plugins.detekt)
 }
 
 group = "io.github.vihrea1337.skycast.server"
@@ -20,6 +21,11 @@ application {
 kotlin {
     // Тот же JDK 21, что и у остальных бэкендов пользователя (devlog, expenses).
     jvmToolchain(21)
+}
+
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom("$rootDir/config/detekt/detekt.yml")
 }
 
 // Репозитории берутся из корневого settings.gradle.kts (dependencyResolutionManagement,
@@ -54,4 +60,6 @@ dependencies {
     testImplementation("io.ktor:ktor-client-mock")
     testImplementation(kotlin("test"))
     testImplementation(libs.kotlinx.coroutines.test)
+
+    detektPlugins(libs.detekt.formatting)
 }
