@@ -24,6 +24,7 @@
 - 🌓 Light / dark / system theme, Material 3 dynamic color, edge-to-edge
 - 📱 **Glance home screen widget** (two responsive sizes) refreshed by WorkManager every 30 min and instantly after every in-app sync; can be pinned right from the app
 - 🌐 English and Russian localization
+- 🧪 **Optional Ktor proxy/aggregator with Swagger UI** ([`server/`](server), Stage 9, stretch goal) — turns Open-Meteo's raw parallel arrays into a tidy JSON list, with a server-side cache, per-IP rate limiting and a `/swagger` playground; independent of the Android app, see [docs/03-api-swagger.md](docs/03-api-swagger.md)
 
 ## Tech stack
 
@@ -38,6 +39,7 @@
 | Widget | Glance + WorkManager (@HiltWorker) |
 | API contract | Hand-written OpenAPI 3 spec ([openapi/weather-api.yaml](openapi/weather-api.yaml)) |
 | Quality | detekt + ktlint (maxIssues 0) · ~60 unit tests (JUnit, Turbine, MockWebServer, Robolectric) · GitHub Actions CI |
+| Optional backend (Stage 9) | Ktor + Swagger UI, rate limiting, server-side cache — plain JVM module, independent from the Android build |
 
 ## Architecture
 
@@ -50,7 +52,11 @@ graph TD
     core-data --> core-network & core-database & core-datastore
     core-network & core-database & core-datastore & core-data & core-domain --> core-model
     core-data & core-network --> core-common
+    core-network --> core-openmeteo
+    server -. optional, standalone .-> core-openmeteo
 ```
+
+`server` is not part of the Android app graph — it is a separate, independently deployable Gradle project (see [Tech stack](#tech-stack) above) that shares only the Open-Meteo response contract (`core-openmeteo`) with the app, so both sides can never disagree on that shape.
 
 **Offline-first.** Room is the single source of truth: `WeatherRepository.observeWeather()` returns a `Flow` built from DAO flows (`flatMapLatest` switches the stream when the selected city changes), while `refresh()` only writes to the database — the UI receives new data reactively and never touches the network directly. A failed refresh never corrupts the cache: with data on screen it degrades to a snackbar, without data — to a full-screen error with retry.
 
@@ -69,7 +75,7 @@ graph TD
 
 ## Weather data
 
-Weather and geocoding by [Open-Meteo.com](https://open-meteo.com/) (CC-BY 4.0) — free, no API key required, which also means the repository contains no secrets at all.
+Weather and geocoding by [Open-Meteo.com](https://open-meteo.com/) (CC-BY 4.0) — free, no API key required, which also means the repository contains no secrets at all. The optional `server/` module (Stage 9) proxies the same Open-Meteo endpoint and repeats the same attribution in its own OpenAPI spec, shown live in its Swagger UI.
 
 ## Build & run
 
@@ -83,7 +89,7 @@ Full checks (what CI runs): `./gradlew detekt lint test assembleDebug`
 
 ## Project docs
 
-The complete design docs live in [`docs/`](docs/): [single-file project plan](docs/PLAN.md) (architecture, per-module specs, testing strategy) and the [staged roadmap](docs/00-roadmap.md) with acceptance criteria — every stage shipped as a git tag (`v0.1` … `v1.0`).
+The complete design docs live in [`docs/`](docs/): [single-file project plan](docs/PLAN.md) (architecture, per-module specs, testing strategy), the [staged roadmap](docs/00-roadmap.md) with acceptance criteria — every stage shipped as a git tag (`v0.1` … `v1.0`) — and [the optional Ktor backend](docs/03-api-swagger.md) (Stage 9: design decisions, how to run it, and a hardening story worth reading).
 
 ## License
 
