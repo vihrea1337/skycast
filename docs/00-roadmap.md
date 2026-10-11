@@ -92,9 +92,21 @@
 - [x] Тег `v1.0`, GitHub Release с подписанным APK
 - [ ] Перед ссылкой в резюме: открыть репозиторий (`gh repo edit --visibility public`) и прогнать чек-лист из PLAN.md §8.4
 
-## Этап 9 (опциональный, stretch goal) — свой бэкенд со Swagger UI
+## Этап 9 (опциональный, stretch goal) — свой бэкенд со Swagger UI — ✅ выполнен 2026-09-02
 
-Мини-прокси на Ktor: агрегирует Open-Meteo, отдаёт свой JSON, документирован через OpenAPI + Swagger UI. Детали в `03-api-swagger.md`. Делать только после `v1.0`.
+Мини-прокси на Ktor: агрегирует Open-Meteo, отдаёт свой JSON, документирован через OpenAPI + Swagger UI. Детали в [`03-api-swagger.md`](03-api-swagger.md).
+
+- [x] Отдельный JVM-модуль `server/` (Gradle), не трогает Android-сборку (`:app:assembleDebug` по-прежнему зелёный)
+- [x] `GET /api/v1/weather?lat=&lon=` — параллельные массивы Open-Meteo превращены в список объектов
+- [x] Кэш на сервере (in-memory, TTL 10 мин, ключ — координаты, округлённые до 0.01°)
+- [x] Swagger UI на `/swagger` (спека — `server/src/main/resources/openapi/documentation.yaml`)
+- [x] `docker-compose.yml` (порт 8090, не пересекается с moimatch/devlog/expenses на этой машине)
+- [x] Сырой DTO Open-Meteo вынесен в общий JVM-модуль `core:openmeteo` — переиспользован
+      Android-клиентом (`core:network`) и сервером, дублирование убрано
+- [x] Rate limiting per-IP, таймаут HTTP-клиента к Open-Meteo, graceful shutdown
+- [x] 7 тестов (4 юнит на агрегацию/кэш/координаты + 3 через `testApplication` на
+      роутинг и rate limit) — все зелёные; проверено и через настоящий `docker compose up --build`
+- ⬜ Реальный деплой на сервер — не обязателен по ТЗ этапа, не делался
 
 ---
 

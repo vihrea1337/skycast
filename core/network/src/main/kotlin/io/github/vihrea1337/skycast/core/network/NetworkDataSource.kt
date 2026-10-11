@@ -3,8 +3,8 @@ package io.github.vihrea1337.skycast.core.network
 import io.github.vihrea1337.skycast.core.common.result.AppResult
 import io.github.vihrea1337.skycast.core.model.TemperatureUnit
 import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
-import io.github.vihrea1337.skycast.core.network.dto.ForecastResponseDto
 import io.github.vihrea1337.skycast.core.network.dto.PlaceDto
+import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 
 /** Публичный контракт модуля: Retrofit/OkHttp за ним не видны. */
 interface NetworkDataSource {

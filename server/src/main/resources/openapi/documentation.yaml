@@ -1,0 +1,112 @@
+# Спека нашего собственного эндпоинта (не Open-Meteo — та лежит в openapi/weather-api.yaml
+# в корне репозитория и описывает то, что использует Android-клиент напрямую).
+# Открывается на /swagger после запуска сервера.
+openapi: 3.0.3
+info:
+  title: SkyCast Weather Aggregator API
+  description: |
+    Мини-бэкенд SkyCast (Этап 9, опционально): агрегирует Open-Meteo в один читаемый
+    JSON (список объектов вместо параллельных массивов) и кэширует ответ на стороне
+    сервера. Подробности решения — docs/03-api-swagger.md.
+  version: 0.1.0
+  license:
+    name: CC-BY 4.0 (данные Open-Meteo)
+    url: https://creativecommons.org/licenses/by/4.0/
+
+paths:
+  /health:
+    get:
+      operationId: health
+      summary: Проверка живости сервера
+      responses:
+        "200":
+          description: Сервер работает
+          content:
+            application/json:
+              schema: { type: object, properties: { status: { type: string, example: ok } } }
+
+  /api/v1/weather:
+    get:
+      operationId: getWeather
+      summary: Текущая погода + почасовой и дневной прогноз одним аккуратным JSON
+      description: |
+        В отличие от сырого Open-Meteo (параллельные массивы time[]/temperature[]/...),
+        здесь hourly и daily — уже готовые списки объектов. Ответ кэшируется на 10 минут
+        по координатам, округлённым до 0.01° (~1 км).
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, format: double, minimum: -90, maximum: 90 }
+          example: 61.785
+        - name: lon
+          in: query
+          required: true
+          schema: { type: number, format: double, minimum: -180, maximum: 180 }
+          example: 34.347
+      responses:
+        "200":
+          description: Агрегированный прогноз
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AggregatedWeatherResponse" }
+        "400":
+          description: lat/lon отсутствуют, не число или вне допустимого диапазона
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ErrorResponse" }
+
+components:
+  schemas:
+    AggregatedWeatherResponse:
+      type: object
+      required: [latitude, longitude, current, hourly, daily, generatedAt, cached]
+      properties:
+        latitude: { type: number, example: 61.785 }
+        longitude: { type: number, example: 34.347 }
+        current: { $ref: "#/components/schemas/CurrentWeather" }
+        hourly:
+          type: array
+          items: { $ref: "#/components/schemas/HourlyWeather" }
+        daily:
+          type: array
+          items: { $ref: "#/components/schemas/DailyWeather" }
+        generatedAt: { type: string, format: date-time, description: Когда сервер собрал этот ответ }
+        cached: { type: boolean, description: true — отдано из кэша, без похода в Open-Meteo }
+
+    CurrentWeather:
+      type: object
+      properties:
+        time: { type: string, example: "2026-09-02T14:00" }
+        temperatureC: { type: number, example: 21.4 }
+        feelsLikeC: { type: number, example: 19.8 }
+        humidityPercent: { type: integer, example: 62 }
+        weatherCode: { type: integer, description: "WMO-код: 0 ясно ... 95-99 гроза", example: 3 }
+        windSpeedKmh: { type: number, example: 4.2 }
+        pressureHpa: { type: number, example: 1006.9 }
+        isDay: { type: boolean }
+
+    HourlyWeather:
+      type: object
+      properties:
+        time: { type: string, example: "2026-09-02T15:00" }
+        temperatureC: { type: number }
+        weatherCode: { type: integer }
+        precipitationProbabilityPercent: { type: integer, nullable: true }
+        isDay: { type: boolean }
+
+    DailyWeather:
+      type: object
+      properties:
+        date: { type: string, format: date }
+        weatherCode: { type: integer }
+        temperatureMaxC: { type: number }
+        temperatureMinC: { type: number }
+        sunrise: { type: string, example: "2026-09-02T05:12" }
+        sunset: { type: string, example: "2026-09-02T19:47" }
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error: { type: string, example: "параметр lat обязателен" }

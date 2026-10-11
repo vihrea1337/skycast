@@ -1,0 +1,17 @@
+# Локальный запуск агрегатора Open-Meteo (Этап 9).
+# Собрать джарник и поднять:
+#   ./gradlew.bat :server:buildFatJar
+#   cd server && docker compose up -d --build
+# Проверить: curl http://localhost:8090/health
+#            открыть http://localhost:8090/swagger в браузере
+# Порт 8090 выбран, чтобы не конфликтовать с moimatch (5432/8080),
+# devlog-pg (5433) и expenses-pg (5434) на этой же машине.
+services:
+  skycast-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: skycast-server
+    ports:
+      - "8090:8090"
+    restart: unless-stopped

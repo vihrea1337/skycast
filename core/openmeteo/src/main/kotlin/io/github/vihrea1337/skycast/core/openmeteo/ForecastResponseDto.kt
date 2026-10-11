@@ -1,9 +1,16 @@
-package io.github.vihrea1337.skycast.core.network.dto
+package io.github.vihrea1337.skycast.core.openmeteo
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-/** Контракт ответа /v1/forecast — см. openapi/weather-api.yaml в корне репозитория. */
+/**
+ * Контракт ответа /v1/forecast — см. openapi/weather-api.yaml в корне репозитория.
+ *
+ * Живёт в отдельном чисто-JVM модуле (не в core:network), потому что этот же класс
+ * нужен и Android-приложению (core:network → Retrofit), и серверу server/ (Этап 9,
+ * обычный Kotlin/JVM Ktor-проект, к которому нельзя подключить Android-библиотеку).
+ * Раньше был продублирован в обоих местах — см. историю docs/03-api-swagger.md.
+ */
 @Serializable
 data class ForecastResponseDto(
     @SerialName("current") val current: CurrentDto,

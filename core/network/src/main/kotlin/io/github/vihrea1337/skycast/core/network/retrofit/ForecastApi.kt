@@ -1,6 +1,6 @@
 package io.github.vihrea1337.skycast.core.network.retrofit
 
-import io.github.vihrea1337.skycast.core.network.dto.ForecastResponseDto
+import io.github.vihrea1337.skycast.core.openmeteo.ForecastResponseDto
 import retrofit2.http.GET
 import retrofit2.http.Query
 
