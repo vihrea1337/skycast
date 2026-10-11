@@ -17,6 +17,8 @@
 ## Features
 
 - 🌤 Current conditions, 24-hour forecast and 7-day forecast with sunrise/sunset
+- 🎨 **Weather-aware sky**: the home screen background tints itself by condition and day/night (clear, clouds, rain, snow, storm), animated on change, separate palettes for light and dark theme
+- 📈 **Hourly temperature curve** drawn on a Compose `Canvas` (cubic Béziers + gradient fill), scrolling together with the hour columns
 - 📡 **Offline-first**: the UI reads only from the local Room cache; the network merely refreshes it — the app works in airplane mode with an honest "updated N min ago" label
 - 🔎 City search with debounced geocoding, saved cities, one-tap switching
 - 📍 Location detection (coarse, with a graceful fallback to manual search)
@@ -38,7 +40,7 @@
 | Storage | Room (SSOT cache) · Preferences DataStore (settings) |
 | Widget | Glance + WorkManager (@HiltWorker) |
 | API contract | Hand-written OpenAPI 3 spec ([openapi/weather-api.yaml](openapi/weather-api.yaml)) |
-| Quality | detekt + ktlint (maxIssues 0) · ~60 unit tests (JUnit, Turbine, MockWebServer, Robolectric) · GitHub Actions CI |
+| Quality | detekt + ktlint (maxIssues 0) · ~65 unit tests (JUnit, Turbine, MockWebServer, Robolectric) · GitHub Actions CI |
 | Optional backend (Stage 9) | Ktor + Swagger UI, rate limiting, server-side cache — plain JVM module, independent from the Android build |
 
 ## Architecture
