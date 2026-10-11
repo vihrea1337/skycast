@@ -6,6 +6,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    ignore:
+      # Hilt 2.59+ требует AGP 9, а проект сознательно на AGP 8.13 (README → Trade-offs).
+      # Иначе Hilt попадает в общую пачку minor-обновлений и роняет сборку всей пачки.
+      # Снять вместе с переходом на AGP 9 (PR Dependabot agp-9.x).
+      - dependency-name: "com.google.dagger*"
+        versions: [">= 2.59"]
+      - dependency-name: "com.google.dagger.hilt.android"
+        versions: [">= 2.59"]
     groups:
       # Мелкие обновления пачкой — меньше шума
       minor-and-patch:
