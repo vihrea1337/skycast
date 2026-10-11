@@ -28,4 +28,5 @@
     <string name="feature_home_error_network">No internet connection</string>
     <string name="feature_home_error_server">Weather service is unavailable (error %1$d)</string>
     <string name="feature_home_error_unknown">Something went wrong</string>
+    <string name="feature_home_temperature_curve">Temperature over the next hours: from %1$d° to %2$d°</string>
 </resources>

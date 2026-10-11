@@ -1,7 +1,6 @@
 package io.github.vihrea1337.skycast.feature.home
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,6 +22,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -54,6 +55,7 @@ import io.github.vihrea1337.skycast.core.model.WindSpeedUnit
 import io.github.vihrea1337.skycast.feature.home.components.DailyForecastList
 import io.github.vihrea1337.skycast.feature.home.components.HomeSkeleton
 import io.github.vihrea1337.skycast.feature.home.components.HourlyForecastRow
+import io.github.vihrea1337.skycast.feature.home.components.SkyBackdrop
 import kotlinx.coroutines.delay
 import java.time.Duration
 import java.time.Instant
@@ -97,9 +99,13 @@ internal fun HomeScreen(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
+    val current = (state as? HomeUiState.Content)?.weather?.current
+    // Фон — «небо» текущей погоды; без данных (загрузка, ошибка, нет города) — обычная поверхность.
+    SkyBackdrop(type = current?.weatherType, isDay = current?.isDay ?: true, modifier = modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
+                // Прозрачная панель — небо видно и под заголовком с названием города.
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 title = {
                     Text((state as? HomeUiState.Content)?.weather?.location?.name ?: "SkyCast")
                 },

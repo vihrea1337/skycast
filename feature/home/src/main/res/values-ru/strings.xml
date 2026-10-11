@@ -27,4 +27,5 @@
     <string name="feature_home_error_network">Нет соединения с интернетом</string>
     <string name="feature_home_error_server">Сервис погоды недоступен (ошибка %1$d)</string>
     <string name="feature_home_error_unknown">Что-то пошло не так</string>
+    <string name="feature_home_temperature_curve">Температура на ближайшие часы: от %1$d° до %2$d°</string>
 </resources>
