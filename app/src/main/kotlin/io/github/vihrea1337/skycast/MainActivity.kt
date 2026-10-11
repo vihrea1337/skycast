@@ -36,7 +36,10 @@ class MainActivity : ComponentActivity() {
             }
             SkyCastTheme(darkTheme = darkTheme) {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    SkyCastNavHost(modifier = Modifier.padding(innerPadding))
+                    // Только нижний отступ: верхний (под статус-бар) уже даёт TopAppBar каждого
+                    // экрана — с полным innerPadding он применялся дважды, и над заголовком
+                    // висела пустая полоса высотой в статус-бар.
+                    SkyCastNavHost(modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding()))
                 }
             }
         }
