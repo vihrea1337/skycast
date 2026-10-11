@@ -40,7 +40,7 @@
 | Storage | Room (SSOT cache) · Preferences DataStore (settings) |
 | Widget | Glance + WorkManager (@HiltWorker) |
 | API contract | Hand-written OpenAPI 3 spec ([openapi/weather-api.yaml](openapi/weather-api.yaml)) |
-| Quality | detekt + ktlint (maxIssues 0) · ~65 unit tests (JUnit, Turbine, MockWebServer, Robolectric) · GitHub Actions CI |
+| Quality | detekt + ktlint (maxIssues 0) · ~65 unit tests (JUnit, Turbine, MockWebServer, Robolectric) · Compose UI tests on an emulator in CI · GitHub Actions CI |
 | Optional backend (Stage 9) | Ktor + Swagger UI, rate limiting, server-side cache — plain JVM module, independent from the Android build |
 
 ## Architecture
