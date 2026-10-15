@@ -6,7 +6,7 @@ plugins {
     // kotlinx.serialization — учит компилятор превращать классы в JSON и обратно.
     alias(libs.plugins.kotlin.serialization)
     // Плагин Ktor — удобный запуск и сборка "толстого" JAR (один файл для Docker-образа).
-    id("io.ktor.plugin") version "3.0.3"
+    id("io.ktor.plugin") version "3.6.0"
     alias(libs.plugins.detekt)
 }
 
@@ -49,7 +49,7 @@ dependencies {
     implementation("io.ktor:ktor-server-rate-limit")
     // Swagger UI на /swagger, читает статический OpenAPI-файл из resources/openapi/.
     implementation("io.ktor:ktor-server-swagger")
-    implementation("ch.qos.logback:logback-classic:1.5.12")
+    implementation("ch.qos.logback:logback-classic:1.6.5")
 
     // --- Клиент: сам сервер ходит в Open-Meteo, чтобы агрегировать ответ ---
     implementation("io.ktor:ktor-client-core")
