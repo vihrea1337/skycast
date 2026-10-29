@@ -20,7 +20,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Static analysis, lint, unit tests, build
         # `test` (а не testDebugUnitTest): покрывает и Android-, и чистые JVM-модули
@@ -45,7 +45,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v5
 
       - name: Enable KVM
         run: |
